@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AgentCard } from "@/components/AgentCard";
+import { SupplyBand } from "@/components/SupplyBand";
 import { CATEGORIES, SKULL_AGENT_ID } from "@/lib/catalog";
 import type { CategoryId } from "@/lib/types";
 import { useKarma } from "@/state/karma";
@@ -56,6 +57,9 @@ export default function MarketplacePage() {
 
   return (
     <div className="h-full overflow-y-auto">
+      {/* Lado oferta: vender conocimiento / crear agentes */}
+      <SupplyBand />
+
       {/* Hero band */}
       <div className="border-b border-line px-10 pb-7 pt-7">
         <div className="mx-auto max-w-[1500px]">

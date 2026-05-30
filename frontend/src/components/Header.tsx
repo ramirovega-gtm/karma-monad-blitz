@@ -2,9 +2,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useKarma } from "@/state/karma";
+import { useDemo } from "@/components/GuidedDemo";
 
 const NAV = [
   { href: "/", label: "Marketplace" },
+  { href: "/crear", label: "Crear / Vender" },
   { href: "/contexto", label: "Tu Contexto" },
   { href: "/procedencia", label: "Procedencia" },
   { href: "/muro", label: "Muro de Vetados" },
@@ -14,6 +16,7 @@ const NAV = [
 export function Header() {
   const pathname = usePathname();
   const { wallet, skulls } = useKarma();
+  const { start } = useDemo();
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
@@ -53,6 +56,13 @@ export function Header() {
 
       {/* Red + wallet */}
       <div className="ml-auto flex items-center gap-3.5">
+        <button
+          onClick={start}
+          className="flex items-center gap-2 rounded-xl border border-acc/45 bg-gradient-to-b from-acc/20 to-monad/15 px-4 py-2 text-[13.5px] font-semibold text-white transition hover:brightness-110 active:scale-95"
+          title="Recorrido narrado de 3 minutos que maneja la app en vivo"
+        >
+          ▶ Demo guiada
+        </button>
         <span className="flex items-center gap-2 rounded-full border border-monad/35 bg-monad/10 px-3.5 py-2 font-mono text-[13px] tracking-wide text-acc">
           <span className="h-2 w-2 rounded-full bg-acc shadow-[0_0_10px_var(--color-acc)]" />
           {wallet.network.toUpperCase()}
