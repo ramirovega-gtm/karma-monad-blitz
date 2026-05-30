@@ -20,6 +20,7 @@ import { type ReputationLayer, type Hex } from './lib/reputation';
 import { OnchainReputationLayer } from './lib/reputation.onchain';
 import { env } from './lib/env';
 import { getAgent, type AgentKind } from './agents';
+import { apiRouter } from './api';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Wire types x402 (forma de la spec; `network` ampliado para Monad).
@@ -128,6 +129,19 @@ async function settle(payload: PaymentPayload, req: PaymentRequirements): Promis
 export function createServer(reputation: ReputationLayer): Express {
   const app = express();
   app.use(express.json());
+
+  // CORS: el front (Next, otro puerto) dispara estos endpoints desde el browser.
+  app.use((req: Request, res: Response, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, X-PAYMENT');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.header('Access-Control-Expose-Headers', 'X-PAYMENT-RESPONSE');
+    if (req.method === 'OPTIONS') return res.sendStatus(204);
+    next();
+  });
+
+  // Router de acción para el front (cascada, subasta, verificación on-chain).
+  app.use('/api', apiRouter(reputation));
 
   app.get('/health', (_req: Request, res: Response) => {
     res.json({ ok: true, network: NETWORK, caip2: CAIP2, demoSafe: env.DEMO_SAFE });

@@ -16,12 +16,12 @@
 ## 📍 Estado actual
 
 ```
-FASE: 3 · Front (próxima sesión) — backend + contratos + S1 COMPLETOS ✅
+FASE: 3 · Front (EN CURSO) — backend + contratos + S1 COMPLETOS ✅
 S0 ✅ · A ✅ · B ✅ · C ✅ · MERGE ✅ · S1 ✅  (todo on-chain, en main, pusheado)
-FRONT: ⬜ próxima sesión → `frontend/` EN ESTE REPO (puede tocar el back). Brief: sessions/SESSION-FRONT.md
-ÚLTIMO PASO CERRADO: S1 ReverseAuction deployado/verificado + demo en vivo (npm run auction)
-PRÓXIMO PASO: Sesión FRONT — armar frontend/ (Next+React Flow+viem) + integrar eventos/contratos
-BLOQUEOS: ninguno (RPC_WS resuelto: wss://testnet-rpc.monad.xyz funciona, ya en .env)
+FRONT: 🟡 `frontend/` ARMADO (Next 16 + React Flow + viem) — 5 pantallas + grafo en vivo + showstopper
+ÚLTIMO PASO CERRADO: frontend/ con marketplace + Procedencia (grafo) + Muro + Detalle + Registrar; backend/api.ts (job/auction)
+PRÓXIMO PASO: ensayo de demo + (opcional) cableo WS en vivo + deploy a Vercel
+BLOQUEOS: ninguno
 DEMO BACKEND LISTO: reúso/regalía · GoodPayer · 💀 Skull · subasta (bid-weighting + calavera revierte) — todo on-chain
 ADDRESSES: ScoreRegistry 0x9402…966C · ReputationSBT 0x75da…a3aE · ReverseAuction 0x7ca6…b459 (ver abi/deployments.json)
 ```
@@ -75,11 +75,15 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 ### FRONT · Integración del front `session/front` ⬜ (próxima sesión)
 > Vive en `frontend/` EN ESTE REPO; la sesión puede tocar el back para exponer endpoints. Brief: `sessions/SESSION-FRONT.md`. Detalle de integración: `FRONTEND-HANDOFF.md`.
 - [x] `RPC_WS` resuelto: `wss://testnet-rpc.monad.xyz` (probado, en `.env`)
-- [ ] `frontend/` (Next + shadcn + `@xyflow/react` + viem) consumiendo `abi/` (addresses + ABIs)
-- [ ] Grafo en vivo: `watchContractEvent` sobre `PaymentRecorded`/`ScoreUpdated` (+ `JobOpened`/`BidPlaced`/`JobClosed`)
-- [ ] Score + badge Tier por nodo (`tierOf`/`hasSkull`) + showstopper (calavera + bid rechazado) + contador tx/seg + comparador de costo
-- [ ] (si hace falta) Endpoints HTTP en el back para los botones (job/auction/markDefault) — sin romper el loop core (`npm run demo`/`auction` verdes)
+- [x] `frontend/` (Next 16 + Tailwind v4 + `@xyflow/react` + viem) consumiendo `abi/` (copiado a `frontend/src/onchain`)
+- [x] **5 pantallas** (Spec Layout): Marketplace (cards + sidebar/filtros + estado VETADO), Detalle, **Procedencia = grafo React Flow en vivo**, Muro de Vetados, Registrar (wizard colateral con decay)
+- [x] **Showstopper**: trigger de veto → 💀 en card + nodo del grafo + fila en el Muro; subasta con bid de calavera rechazado
+- [x] Score + badge Tier por nodo + contador tx/seg + comparador de costo (Monad vs Ethereum) en Procedencia
+- [x] Motor de demo **fixtures-first** (corre sin backend); cascada agente→agente, regalía/reúso, calavera
+- [x] `backend/api.ts` (router de acción): `POST /api/job` (cascada real on-chain vía `execStep`), `POST /api/auction/run`, `GET /api/onchain/:id` + CORS en `server.ts`. Loop core intacto.
+- [ ] (opcional) Cableo WS en vivo (`watchContractEvent`) reemplazando la simulación
 - [ ] Deploy a Vercel + ensayo de demo + 3 agentes precargados (fallback)
+- **Decisión de scope**: el catálogo/vetados/colateral son **seed de producto en el front** (no endpoints) — el colateral es visual+API, sin contrato nuevo (contratos congelados). La calavera sigue siendo el único hecho on-chain real.
 
 ### Stretch ✅
 - [x] **S1** `ReverseAuction.sol`: `openJob` / `bid` (ponderado por reputación, calavera revierte) / `close` — deployado + verificado + validado en vivo
@@ -93,6 +97,33 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 ## 📒 Log
 
 > Entradas nuevas arriba. Formato: `### [hora] — título` + bullets `Added/Changed/Fixed/Cut`.
+
+### [FRONT-apify] — Marketplace reestructurado al layout de Apify Store
+- **Changed** — Distribución portada de apify.com/store manteniendo el brand de Karma: **search hero arriba**, **sidebar izquierdo de filtros** (Categorías con contadores + Modelo de precio + Nivel de riesgo + toggle "Solo oficiales"), fila de **orden + contador de resultados**, **grid 3-col**.
+- **Changed** — Card a la anatomía densa de Apify (ícono a la izquierda, título + autor con avatar, descripción, fila de stats ★·usuarios·éxito, pricing en el footer) integrando el brand de Karma (chip de Karma score por tier, colateral, recurrencia, star ribbon, estado VETADO). Tipografía sans bold en nombres y score.
+- **Verified** — `npm run build` verde (7 rutas).
+
+### [FRONT-contexto] — Context graph del lado del usuario ("Tu Contexto")
+- **Added** — Pantalla `/contexto`: el usuario/empresa carga su contexto una vez (Identidad & Fiscal, Negocio, Preferencias, Integraciones) → los agentes lo leen para ejecutar **sin pedir inputs**. Medidor de completitud + persistencia en `localStorage`.
+- **Added** — **Memoria por agente**: cuando un agente necesita un dato muy específico que no está en el contexto global, lo pide una vez y queda guardado scopeado a ese agente (no lo vuelve a pedir). Seed: Fiscal-1 ya recordó su punto de venta AFIP.
+- **Added** — En Detalle de cada agente: bloque "Contexto que usa este agente" (chips ✓ cargado / ○ falta, linkean a /contexto) + el input específico (`asks`) que se guarda en la memoria del agente. Modelo en `lib/context.ts` (`AGENT_CONTEXT`: qué lee y qué pide cada agente). Provider extendido (`context`, `agentMemory`, `setContextField`, `saveAgentInput`).
+- **Verified** — `npm run build` verde (7 rutas).
+
+### [FRONT-redesign] — Visual portado del diseño Claude Design (Monad-violet + serif)
+- **Changed** — Sistema de diseño nuevo en `globals.css`: paleta dark Monad-violet (`#0A0A0F` bg, `#13132B` cards, violeta `#7C3AED`/`#A855F7`, cyan pagos, verde GoodPayer, rojo calavera), **tipografía serif (Georgia) para display/headings**, glows radiales violeta/cyan + textura de grilla tenue. Propaga a las 5 pantallas vía tokens.
+- **Changed** — Catálogo reescrito al del diseño (`marketplace-data.js`): 11 agentes B2C con framing LatAm ("delegá lo que odiás") — Fiscal-1, Verifier-3, Prospector-0, Yield-9, Oracle-1… + **Degen-4, el villano** que vacía la cartera (slash 20k → calavera). Colateral escala con riesgo (1-5). Atlas (orquestador) dispara la cascada del grafo. 3 agentes mapean a ids on-chain reales (markDefault real sobre id 3).
+- **Changed** — Marketplace rediseñado: hero "Delegá lo que *odiás*", search "¿Qué querés dejar de hacer?" + Delegar, **chips de categoría horizontales** (Impuestos, Ventas, Compliance, Inversiones, Cripto), cards con **score serif gigante** como héroe, star ribbon, badges de confianza, colateral por riesgo, botón Contratar violeta, estado VETADO con calavera de fondo. Header con wordmark serif "Karma." + pills violeta + wallet verde.
+- **Verified** — `npm run build` verde (6 rutas, TS ok). Demo fixtures-first intacto. Procedencia/Muro/Detalle/Registrar heredan el sistema (cohesivos).
+- **Note** — El archivo de diseño (share de Claude Design) no es accesible por fetch desde el entorno (404, requiere sesión); el usuario lo descargó a `~/Downloads/Karma (1)` (CSS+JS+screenshots de referencia).
+
+### [FRONT] — `frontend/` armado: marketplace + grafo en vivo + showstopper
+- **Added** — App Next 16 (App Router) + Tailwind v4 + `@xyflow/react` v12 + viem en `frontend/`. Tema oscuro con tokens del Spec Layout. Provider de estado (`src/state/karma.tsx`) que sostiene el grafo (los pagos = aristas), scores, calaveras, vetados y subasta — **motor de demo fixtures-first** (corre sin backend).
+- **Added** — 5 pantallas: **Marketplace** (sidebar categorías + filtros + search/sort, card de agente con chips Karma/colateral/recurrencia + estado VETADO, trigger de veto), **Detalle** (identidad + Karma score + medallas + stats + track record + card "Programá la recurrencia"), **Procedencia** (grafo React Flow en vivo: nodos=agentes con score/badge, aristas=pagos animadas, regalía=arista fina; panel resumen + subasta + comparador Monad vs Ethereum), **Muro de Vetados** (4 KPIs + padrón), **Registrar** (wizard 3 pasos con colateral + decay).
+- **Added** — Catálogo seed (`src/lib/catalog.ts`): 10 agentes en 5 verticales (según el análisis de tiers); 3 mapean a ids on-chain reales (1/2/3) + orquestador "Atlas". Colateral = concepto visual (no estaba en el back; sin contrato nuevo).
+- **Added** — `backend/api.ts` (router de acción montado en `server.ts` con CORS): `POST /api/job` (cascada real on-chain reutilizando `execStep`), `POST /api/auction/run` (reutiliza `runAuction`), `GET /api/onchain/:id` (verificación `hasSkull`). El front los dispara fire-and-forget para efecto on-chain real mientras anima el grafo.
+- **Changed** — `backend/auction.ts`: extraído `runAuction()` exportable (devuelve `AuctionResult`); `main()`/standalone lo llama (cambio mínimo, lógica intacta).
+- **Verified** — `frontend`: `npm run build` verde (6 rutas, TS ok). Backend: `npm run typecheck` verde.
+- **Next** — Ensayo de demo (3 min) + (opcional) cableo WS en vivo + deploy a Vercel.
 
 ### [FRONT-prep] — Preparación de la sesión de front
 - **Changed** — Decisión: el front ahora vive en **`frontend/` dentro de este repo** (antes "repo aparte") → una sesión puede tocar front Y back, con un solo git/CHANGELOG. Motivo: los botones/elementos del front necesitan funcionalidad del back (endpoints).
