@@ -13,6 +13,8 @@ dist/
 contracts/out/
 contracts/cache/
 contracts/broadcast/
+# deps via `forge install` (ver contracts/README) — no se commitean
+contracts/lib/
 
 # OS / editor
 .DS_Store

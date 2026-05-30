@@ -16,16 +16,16 @@
 ## 📍 Estado actual
 
 ```
-FASE: 1 · Build (cimientos listos)
-S0 Cimientos:        ✅ hecho (mergeado a main)
-A  Contratos:        ⬜ listo para arrancar
-B  Economía agentes: ⬜ listo para arrancar
-C  Reputación chain: ⬜ listo para arrancar
-MERGE Integración:   ⬜ bloqueado por A+B+C
-FRONT (otra persona):⬜ se acopla después (repo aparte)
-ÚLTIMO PASO CERRADO: S0 · scaffold + lib + ABIs + mock (typecheck + smoke OK)
-PRÓXIMO PASO: abrir A, B y C en paralelo (worktree + branch por sesión)
+FASE: 2 · Integrado — LOOP CORE VERDE on-chain ✅
+S0 Cimientos:        ✅  ·  A Contratos: ✅ (deployado+verificado)
+B  Economía agentes: ✅  ·  C Reputación chain: ✅
+MERGE Integración:   ✅ loop core E2E real (recordPayment→evento→score→SBT) + 💀 SKULL on-chain
+FRONT (otra persona):⬜ se acopla (ya tiene addresses + ABIs + abi/fixtures.events.json)
+ÚLTIMO PASO CERRADO: MERGE · loop core en vivo en Monad testnet (designer→Skull verificado: hasSkull=true)
+PRÓXIMO PASO: polish/demo — prep de demo (ver notas) + opcional S1 si sobra tiempo
 BLOQUEOS: ninguno
+PREP DEMO: (1) saltear el input por corrida (el cache de artefactos persiste on-chain → reúso se dispara en re-runs);
+           (2) para mintear GoodPayer en vivo, subir volumen/jobs o bajar GOOD_THRESHOLD (score actual 10 < 70)
 ```
 
 Leyenda: ⬜ pendiente · 🟡 en progreso · ✅ hecho · ⛔ cortado (scope) · ⚠️ con riesgo/bloqueo
@@ -44,29 +44,35 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 - [x] Verificado: `npm run typecheck` limpio + `npm run smoke` OK
 - [x] **Merge a `main`** → habilita A/B/C
 
-### A · Contratos `session/a-contratos`
-- [ ] `ReputationSBT.sol` (EIP-5192, tiers, getters, guard `_update`)
-- [ ] `ScoreRegistry.sol` (`recordPayment`/`lookup`/`setScore` ECDSA/`markDefault`)
-- [ ] Tests Foundry verdes + `Deploy.s.sol`
-- [ ] Deploy testnet + Sourcify → `abi/deployments.json` + ABIs reales (matchean `abi/I*.json`)
+### A · Contratos `session/a-contratos` ✅
+- [x] `ReputationSBT.sol` (EIP-5192, tiers, getters, guard `_update`, calavera irrevocable)
+- [x] `ScoreRegistry.sol` (`recordPayment`/`lookup`/`setScore` ECDSA+nonce/`markDefault`)
+- [x] Tests Foundry verdes (15/15) + `Deploy.s.sol` (ciclo SBT→Registry→authorize)
+- [x] ABIs reales exportados a `abi/{ScoreRegistry,ReputationSBT}.json` — **matchean** `abi/I*.json` ✓
+- [x] **Deployado + verificado (Sourcify `exact_match`)** → `abi/deployments.json` con addresses reales
+  - ScoreRegistry `0x9402BA73EA2d51F62BAe071D98DD3ce878d8966C` · ReputationSBT `0x75da3A887c9384d3805b630eF961Aed91892a3aE`
+  - Smoke on-chain OK: `recordPayment` emite + `lookup` devuelve (royalty 500bps)
 
-### B · Economía de agentes `session/b-agentes`
-- [ ] `server.ts` (x402, endpoint 402, `recordPayment` tras settle, `DEMO_SAFE`)
-- [ ] `agents/` (2-3 proveedores) + `orchestrator.ts` (lookup→pagar/regalía→record→postScore)
-- [ ] Beat regalía + beat calavera (`markDefault`) contra `MockReputationLayer`
-- [ ] Loop de economía corre aislado (`npx tsx orchestrator.ts`)
+### B · Economía de agentes `session/b-agentes` ✅
+- [x] `server.ts` (x402, endpoint 402, `recordPayment` tras settle, `DEMO_SAFE`)
+- [x] `agents/` (3 proveedores: scraper/analyst/designer) + `orchestrator.ts` (lookup→pagar/regalía→record→postScore)
+- [x] Beat regalía + beat calavera (`markDefault`) contra `MockReputationLayer`
+- [x] Loop de economía corre aislado (`npx tsx backend/orchestrator.ts` · `npm run demo`)
 
 ### C · Reputación on-chain `session/c-oraculo`
-- [ ] `oracle.ts` (fórmula + firma ECDSA + `setScore`)
-- [ ] `bridge.ts` (helpers viem read/write a ScoreRegistry)
-- [ ] `lib/reputation.onchain.ts` (`OnchainReputationLayer implements ReputationLayer`)
-- [ ] Tests anvil/testnet: `recordPayment`→event, `setScore`→event, `markDefault`→Skull
+- [x] `oracle.ts` (fórmula `min(100, jobs*10 + volUSDC/10)` desde eventos PaymentRecorded + firma ECDSA EIP-191 + nonce)
+- [x] `bridge.ts` (helpers viem read/write a ScoreRegistry + SBT, gas limit fijo, espera receipt)
+- [x] `lib/reputation.onchain.ts` (`OnchainReputationLayer implements ReputationLayer` + `fromEnv()`)
+- [x] Tests offline (`backend/_test.onchain.ts`): fórmula + recuperación de firma alineada con A — verdes
+- [x] Tests anvil/testnet: `recordPayment`→event, `setScore`→event, `markDefault`→Skull (validado en MERGE contra contratos de A)
 
-### MERGE · Integración `integration/merge`
-- [ ] Merge a+b+c · swap Mock → `OnchainReputationLayer` (1 línea) · addresses reales
-- [ ] Loop core end-to-end verificable por explorer (pago→evento→score→SBT)
-- [ ] Beat regalía + beat calavera validados · `DEMO_SAFE` operativo
-- [ ] Publicar `abi/deployments.json` + ABIs + `abi/fixtures.events.json` (para el front) · 3 agentes fallback
+### MERGE · Integración `integration/merge` ✅
+- [x] Merge a+b+c · swap Mock → `OnchainReputationLayer.fromEnv()` (en `orchestrator.ts` + `server.ts`) · `.env` con addresses reales
+- [x] Loop core end-to-end **en vivo en Monad testnet** (recordPayment→PaymentRecorded→postScore→markDefault), typecheck limpio
+- [x] Beat regalía (scraper→regalía 500bps) + beat calavera (designer→Skull, `hasSkull=true` on-chain) · `DEMO_SAFE` operativo
+- [x] Fix integración: `oracle.readStats` pagina `getLogs` en ventanas de 100 (límite del RPC público de Monad)
+- [x] Publicado `abi/fixtures.events.json` (6 PaymentRecorded + 3 ScoreUpdated reales) para el front
+- [ ] (prep demo) 3 agentes precargados + saltear input por corrida + tuning GoodPayer (ver 📍)
 
 ### Stretch (solo si el loop core anda a las 15:00)
 - [ ] **S1** `ReverseAuction.sol`: `openJob` / `bid` (ponderado por reputación, calavera revierte) / `close`
@@ -79,6 +85,49 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 ## 📒 Log
 
 > Entradas nuevas arriba. Formato: `### [hora] — título` + bullets `Added/Changed/Fixed/Cut`.
+
+### [MERGE] — Integración: loop core verde on-chain
+- **Changed** — Swap mock→real: `new MockReputationLayer()` → `OnchainReputationLayer.fromEnv()` en `backend/orchestrator.ts` + `backend/server.ts` (única edición de código del MERGE). `.env` (gitignored) con addresses reales de A + claves descartables (DEPLOYER/ORACLE) de `karma-A`.
+- **Fixed** — `backend/oracle.ts` `readStats`: pagina `eth_getLogs` en ventanas de 100 bloques (el RPC público de Monad rechaza rangos mayores). Era el bloqueo que C anticipó.
+- **Verified (on-chain, Monad testnet)** — `npm run demo`: cascada → recordPayment (TXs reales) → postScore; beat regalía (scraper 500bps); **beat calavera: designer → `markDefault` → SKULL minteado** (`backend/_merge-verify.ts` confirma `hasSkull(3)=true`, agentes 1/2 sin calavera). typecheck limpio.
+- **Added** — `abi/fixtures.events.json`: 6 `PaymentRecorded` + 3 `ScoreUpdated` reales (con txHash/blockNumber) para que el front construya sin esperar al backend. `backend/_merge-verify.ts` (verificación + generador de fixtures).
+- **Added** — `build/STRETCH-x402-monad.md`: nota para migrar a `@x402/*` modular (settle real en Monad vía `eip155:10143`) — solo si el loop core está verde temprano.
+- **Note (prep demo)** — (1) el cache de artefactos es permanente on-chain → para una demo limpia, saltear el input por corrida o redeploy. (2) GoodPayer no se mintea con los montos actuales (score 10 < umbral 70) → subir volumen/jobs o bajar `GOOD_THRESHOLD`. El héroe (calavera) no se ve afectado.
+- **Next** — Polish + ensayo de demo. Opcional S1 (`ReverseAuction`) si sobra tiempo. Front se acopla con `abi/deployments.json` + ABIs + fixtures.
+
+### [A] — Deploy a Monad testnet
+- **Added** — Contratos **deployados y verificados en Sourcify** (`exact_match`) en chain 10143:
+  - `ScoreRegistry` = `0x9402BA73EA2d51F62BAe071D98DD3ce878d8966C`
+  - `ReputationSBT` = `0x75da3A887c9384d3805b630eF961Aed91892a3aE`
+  - `signer` (oráculo) = `0xeF7B39eb437a5D783C29Bf7a8e9a11aA01836647` · `goodThreshold` = 70 · `owner` = `0x8a4FA5a15bBAAC2A387a75E2a57511A60C4851ee`
+- **Added** — `abi/deployments.json` con addresses reales + `deployedAt`. Wiring on-chain verificado (sbt↔registry, signer, threshold, owner).
+- **Fixed** — Smoke on-chain en testnet: `recordPayment` emite `PaymentRecorded` y `lookup` devuelve el artefacto cacheado (royalty 500bps).
+- **Next** — Sesión C consume estas addresses + ABIs (`OnchainReputationLayer`); el oráculo firma con `ORACLE_PRIVATE_KEY` del `.env` (esquema en `contracts/README.md`).
+
+### [A] — Contratos (Foundry)
+- **Added** — `contracts/` con Foundry (Solidity 0.8.28, OZ v5.1, evm cancun). `ReputationSBT.sol` (SBT soulbound EIP-5192, tiers GoodPayer/Skull, `tokenId == agentId`, guard `_update`, `supportsInterface(0xb45a3c0e)`, calavera **irrevocable**: una vez Skull no se degrada) y `ScoreRegistry.sol` (`recordPayment` arista+cache royalty 500bps, `lookup`, `setScore` con ECDSA EIP-191 + anti-replay por nonce + mint GoodPayer al cruzar `goodThreshold`, `markDefault` onlyOwner→Skull).
+- **Added** — `test/Karma.t.sol`: 15 tests verdes (record/lookup, threshold mint, firma válida/inválida, replay, markDefault, skull irrevocable, soulbound transfer revierte, `locked()==true`, interfaces). `script/Deploy.s.sol` (ciclo SBT→ScoreRegistry→`setScoreRegistry`), validado en anvil.
+- **Added** — ABIs reales exportados a `abi/ScoreRegistry.json` y `abi/ReputationSBT.json`; verificado que son **superset exacto** de `abi/ISCoreRegistry.json` / `abi/IReputationSBT.json` (todos los miembros de interfaz presentes con tipos idénticos). `contracts/README.md` documenta setup + **esquema de firma del oráculo** (para Sesión C).
+- **Changed** — `.gitignore`: agregado `contracts/lib/` (deps por `forge install`, no se commitean).
+- **Blocked** — Deploy a Monad testnet pendiente: falta `.env` con `DEPLOYER_PRIVATE_KEY` financiada (MON de gas vía faucet). Comando y verificación Sourcify listos en `contracts/README.md`. Tras deployar: completar `abi/deployments.json` y re-exportar ABIs.
+- **Next** — Deployar a testnet + verificar Sourcify + llenar `abi/deployments.json` (addresses + `deployedAt`).
+### [C] — Reputación on-chain (oráculo + puente)
+- **Added** — `backend/bridge.ts`: helpers viem read/write a ScoreRegistry (`readLookup`, `writeRecordPayment`, `writeSetScore`, `writeMarkDefault`) + SBT (`readHasSkull`, `readTier`). Gas limit fijo (Monad cobra por límite) y espera de receipt para ordenar pago→lectura de logs.
+- **Added** — `backend/oracle.ts`: fórmula fija `score = min(100, jobs*10 + volUSDC/10)` calculada desde los eventos `PaymentRecorded` on-chain; firma ECDSA del digest con **domain separation** `keccak256(abi.encodePacked(agentId,value,nonce,scoreRegistry,chainId))` vía EIP-191 personal_sign (`signMessage({message:{raw}})`); `nextNonce()` = ms epoch (anti-replay).
+- **Changed** — Esquema de firma alineado con A: el digest pasó de 3 a **5 campos** (agrega `address(this)` + `chainId`) tras confirmar que A implementó `setScore` con domain separation. `scoreDigest`/`signScore` reciben `scoreRegistry`+`chainId`; `OnchainReputationLayer.postScore` los propaga (chainId = `BigInt(env.CHAIN_ID)`). Tests offline ahora cubren domain separation (otro contrato / otra red → no recupera al signer). Verdes.
+- **Added** — `backend/lib/reputation.onchain.ts`: `OnchainReputationLayer implements ReputationLayer` (orquesta bridge+oracle) + `fromEnv()` para el swap de 1 línea en MERGE.
+- **Added** — `backend/_test.onchain.ts`: tests offline (fórmula + que la firma recupera al signer). Verdes. `tsc --noEmit` limpio.
+- **Changed** — Solo FILES I OWN + CHANGELOG sección C. `lib/reputation.ts` no se tocó (se implementa).
+- **✅ ALINEADO con A** — Esquema de firma de `setScore` (fuente de verdad: `contracts/README.md` de A): el contrato verifica `ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(keccak256(abi.encodePacked(agentId,value,nonce,address(this),block.chainid))), sig) == signer`, con tipos `uint256,int256,uint256,address,uint256`. Anti-replay vía `nonceUsed[nonce]` (nonce ms-epoch, único). El `signer` del contrato = address de `ORACLE_PRIVATE_KEY` (`oracleAddress()`).
+- **Next** — MERGE: setear `SCORE_REGISTRY`/`REPUTATION_SBT` reales (de A), swap `new MockReputationLayer()` → `OnchainReputationLayer.fromEnv()`, y validar on-chain (recordPayment→event, setScore→ScoreUpdated, markDefault→Skull). Opcional: pasar `fromBlock` = bloque de deploy si el RPC limita rango de getLogs.
+### [B] — Economía de agentes (x402 + cascada + 3 beats)
+- **Added** — `backend/agents/` (scraper/analyst/designer determinísticos, offline) + `hash.ts` (`inputHashFor`/`payloadHash`, sentinel `__FAIL__`) + `index.ts` (registro `getAgent`/`listAgents`).
+- **Added** — `backend/server.ts`: server Express con handshake x402 spec-shaped (402 + `accepts` PaymentRequirements → `X-PAYMENT` base64 → settle → `X-PAYMENT-RESPONSE`). Tras settle OK invoca `reputation.recordPayment` (el puente pago→arista del grafo). Ruta admin `POST /admin/markDefault/:agentId` para el beat calavera. `createServer(reputation)` + `startServer()` + entrypoint standalone (`npm run server`, `GET /health`).
+- **Added** — `backend/orchestrator.ts`: cliente x402 + cascada `lookup → pagar/regalía → recordPayment → postScore → markDefault`. Demo in-process (`npm run demo`): cascada (scraper+analyst GoodPayer) → beat reúso (scraper otra vez → regalía 500bps) → beat calavera (designer entrega basura → SKULL). Firma EIP-3009 real cableada en el camino `DEMO_SAFE=false` (guardada).
+- **Changed** — `package.json` (compartido): agregadas deps `express`, `x402`, `x402-express`, `x402-fetch` + dev `@types/express`, y scripts `demo`/`server`. ⚠️ **coordinar el merge de `package.json`/`package-lock.json`** con A/C.
+- **Cut** — Llamadas a Claude en los agentes (artefactos determinísticos → demo offline y reproducible). Camino live del facilitator implementado pero **no ejercitado**: x402 v1.2.0 NO soporta Monad (enum `network` sin 10143) → `DEMO_SAFE` es el camino operativo (el grafo no depende del facilitator en vivo, como manda CLAUDE.md).
+- **Verified** — `npm run typecheck` limpio · `npm run demo` corre el loop completo (3 beats) · server standalone responde `402` sin pago y `200` en `/health`.
+- **Next** — MERGE: cambiar `new MockReputationLayer()` por `OnchainReputationLayer` de C (1 línea en `orchestrator.ts` y, si se usa standalone, en `server.ts`). Nada más del código de B se toca.
 
 ### [S0] — Cimientos
 - **Added** — Scaffold + superficies compartidas (congeladas): `package.json`, `tsconfig.json`, `.gitignore`, `.env.example`; `backend/lib/{types,env,chain,reputation}.ts` (interfaz `ReputationLayer` + `MockReputationLayer`) + `_smoke.ts`; `abi/{ISCoreRegistry,IReputationSBT,deployments}.json`; placeholders `contracts/` y `backend/agents/`.
