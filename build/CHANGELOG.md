@@ -16,16 +16,14 @@
 ## 📍 Estado actual
 
 ```
-FASE: 2 · Integrado — LOOP CORE VERDE on-chain ✅
-S0 Cimientos:        ✅  ·  A Contratos: ✅ (deployado+verificado)
-B  Economía agentes: ✅  ·  C Reputación chain: ✅
-MERGE Integración:   ✅ loop core E2E real (recordPayment→evento→score→SBT) + 💀 SKULL on-chain
-FRONT (otra persona):⬜ se acopla (ya tiene addresses + ABIs + abi/fixtures.events.json)
-ÚLTIMO PASO CERRADO: MERGE+polish · 4 beats verificados on-chain (GoodPayer SBT agente#2 + Skull agente#3)
-PRÓXIMO PASO: ensayo de demo + 3 agentes precargados (fallback)
-BLOQUEOS: ninguno
-DEMO LISTO: loop core (reúso/regalía · GoodPayer · 💀 Skull) + S1 subasta (bid-weighting + bid de calavera revierte) · todo on-chain
-STRETCH S1: ✅ ReverseAuction deployado/verificado — `npm run auction`
+FASE: 3 · Front (próxima sesión) — backend + contratos + S1 COMPLETOS ✅
+S0 ✅ · A ✅ · B ✅ · C ✅ · MERGE ✅ · S1 ✅  (todo on-chain, en main, pusheado)
+FRONT: ⬜ próxima sesión → `frontend/` EN ESTE REPO (puede tocar el back). Brief: sessions/SESSION-FRONT.md
+ÚLTIMO PASO CERRADO: S1 ReverseAuction deployado/verificado + demo en vivo (npm run auction)
+PRÓXIMO PASO: Sesión FRONT — armar frontend/ (Next+React Flow+viem) + integrar eventos/contratos
+BLOQUEOS: conseguir RPC_WS (wss de Monad testnet) para eventos en vivo; si no → fixtures/polling
+DEMO BACKEND LISTO: reúso/regalía · GoodPayer · 💀 Skull · subasta (bid-weighting + calavera revierte) — todo on-chain
+ADDRESSES: ScoreRegistry 0x9402…966C · ReputationSBT 0x75da…a3aE · ReverseAuction 0x7ca6…b459 (ver abi/deployments.json)
 ```
 
 Leyenda: ⬜ pendiente · 🟡 en progreso · ✅ hecho · ⛔ cortado (scope) · ⚠️ con riesgo/bloqueo
@@ -74,6 +72,15 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 - [x] Publicado `abi/fixtures.events.json` (6 PaymentRecorded + 3 ScoreUpdated reales) para el front
 - [ ] (prep demo) 3 agentes precargados + saltear input por corrida + tuning GoodPayer (ver 📍)
 
+### FRONT · Integración del front `session/front` ⬜ (próxima sesión)
+> Vive en `frontend/` EN ESTE REPO; la sesión puede tocar el back para exponer endpoints. Brief: `sessions/SESSION-FRONT.md`. Detalle de integración: `FRONTEND-HANDOFF.md`.
+- [ ] Conseguir `RPC_WS` (wss Monad testnet) o usar fixtures/polling
+- [ ] `frontend/` (Next + shadcn + `@xyflow/react` + viem) consumiendo `abi/` (addresses + ABIs)
+- [ ] Grafo en vivo: `watchContractEvent` sobre `PaymentRecorded`/`ScoreUpdated` (+ `JobOpened`/`BidPlaced`/`JobClosed`)
+- [ ] Score + badge Tier por nodo (`tierOf`/`hasSkull`) + showstopper (calavera + bid rechazado) + contador tx/seg + comparador de costo
+- [ ] (si hace falta) Endpoints HTTP en el back para los botones (job/auction/markDefault) — sin romper el loop core (`npm run demo`/`auction` verdes)
+- [ ] Deploy a Vercel + ensayo de demo + 3 agentes precargados (fallback)
+
 ### Stretch ✅
 - [x] **S1** `ReverseAuction.sol`: `openJob` / `bid` (ponderado por reputación, calavera revierte) / `close` — deployado + verificado + validado en vivo
   - `ReverseAuction` = `0x7ca67a992100ff9CF95f72c70c20a84A9E17b459` (Sourcify) · 22/22 tests · `npm run auction`
@@ -86,6 +93,12 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 ## 📒 Log
 
 > Entradas nuevas arriba. Formato: `### [hora] — título` + bullets `Added/Changed/Fixed/Cut`.
+
+### [FRONT-prep] — Preparación de la sesión de front
+- **Changed** — Decisión: el front ahora vive en **`frontend/` dentro de este repo** (antes "repo aparte") → una sesión puede tocar front Y back, con un solo git/CHANGELOG. Motivo: los botones/elementos del front necesitan funcionalidad del back (endpoints).
+- **Added** — `build/sessions/SESSION-FRONT.md`: brief autocontenido de la sesión de front (rol, FILES I OWN = `frontend/**`, qué puede tocar del back, **protocolo de cambios de backend** sin romper el loop core, pasos, DoD).
+- **Changed** — `build/FRONTEND-HANDOFF.md` reescrito con la realidad actual: 3 addresses reales + verificadas, ABIs + `fixtures.events.json`, eventos de la subasta (S1), reads `tierOf`/`hasSkull`/`scores`, el aviso de `RPC_WS` vacío, y qué endpoints del back exponer para los botones.
+- **Next** — Abrir `session/front` desde `main`: armar `frontend/` + integrar eventos/contratos + (si hace falta) endpoints HTTP en el back.
 
 ### [S1] — Stretch: ReverseAuction (subasta inversa ponderada por reputación)
 - **Added** — `contracts/src/ReverseAuction.sol`: `openJob`/`bid`/`close`. Bid efectivo = `price·(200-score)/100` (peor reputación → más caro); `bid` de un agente con calavera **revierte** (`AgentExcluded`) — exclusión on-chain. Solo LEE ScoreRegistry + ReputationSBT (interfaces mínimas). `+ test/ReverseAuction.t.sol` (7 tests, 22/22 totales) `+ script/DeployAuction.s.sol`.

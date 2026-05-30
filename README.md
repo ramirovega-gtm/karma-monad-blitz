@@ -12,7 +12,7 @@ Es la fusión de dos ideas: una economía de agentes con micropagos x402 + conte
 
 ## Cómo usar este repo
 
-Este repo tiene **el contexto + el plan + el código**: todo el dApp se desarrolla **acá mismo**. **Contratos + backend de este lado**; el **front lo trabaja otra persona** y se acopla después (consume ABIs + eventos). El estado vivo del build está en [`build/CHANGELOG.md`](build/CHANGELOG.md) y el plan con diagramas en [`build/plan.html`](build/plan.html). Acá también está la idea + todo el camino que la produjo, para que cualquiera del equipo (o un agente AI) entienda el qué y el porqué.
+Este repo tiene **el contexto + el plan + el código**: todo el dApp se desarrolla **acá mismo**. El **backend + los 3 contratos** (deployados y verificados en Monad testnet) ya están **completos**, con el loop core verde on-chain; el **front se arma en `frontend/`** en este mismo repo (próxima sesión). El estado vivo del build está en [`build/CHANGELOG.md`](build/CHANGELOG.md) y el plan con diagramas en [`build/plan.html`](build/plan.html). Acá también está la idea + todo el camino que la produjo, para que cualquiera del equipo (o un agente AI) entienda el qué y el porqué.
 
 | Carpeta | Qué hay |
 |---------|---------|
@@ -26,7 +26,7 @@ Este repo tiene **el contexto + el plan + el código**: todo el dApp se desarrol
 | **[`build/plan.html`](build/plan.html)** | **El plan de ejecución con diagramas** (stack, arquitectura, servicios, flujo de datos, esquema de contratos, scaffold, módulos, plan 7h, demo, riesgos). Abrir en el navegador. |
 | **[`build/CHANGELOG.md`](build/CHANGELOG.md)** | **El "acá estamos":** tracker por sesiones + estado vivo del build. Se actualiza al cerrar cada paso. |
 | **[`build/sessions/`](build/sessions/SESSIONS.md)** | **Desarrollo fragmentado en sesiones paralelas** (S0 cimientos → A/B/C → MERGE). Cada `SESSION-*.md` es autocontenido para abrir en una sesión Claude nueva sin pisarse con las otras. |
-| **[`build/FRONTEND-HANDOFF.md`](build/FRONTEND-HANDOFF.md)** | **Todo lo que necesita la persona del front** (otra persona, repo aparte): demo, stack, red, ABIs/addresses, eventos a escuchar, fixtures y gotchas. |
+| **[`build/FRONTEND-HANDOFF.md`](build/FRONTEND-HANDOFF.md)** | **Todo lo que necesita el front** (vive en `frontend/` de este repo): demo, stack, red, ABIs/addresses reales, eventos (incl. subasta), fixtures y gotchas. Brief de la sesión: `build/sessions/SESSION-FRONT.md`. |
 
 ## El loop que define a Karma
 
