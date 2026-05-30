@@ -1,0 +1,19 @@
+# deps
+node_modules/
+
+# secrets
+.env
+.env.local
+
+# build / TS
+dist/
+*.tsbuildinfo
+
+# Foundry (contracts/)
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+
+# OS / editor
+.DS_Store
+Thumbs.db

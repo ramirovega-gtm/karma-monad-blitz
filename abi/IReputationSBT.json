@@ -1,0 +1,46 @@
+[
+  {
+    "type": "function",
+    "name": "mint",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      { "name": "agentId", "type": "uint256" },
+      { "name": "tier", "type": "uint8" }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "locked",
+    "stateMutability": "view",
+    "inputs": [{ "name": "tokenId", "type": "uint256" }],
+    "outputs": [{ "name": "", "type": "bool" }]
+  },
+  {
+    "type": "function",
+    "name": "tierOf",
+    "stateMutability": "view",
+    "inputs": [{ "name": "agentId", "type": "uint256" }],
+    "outputs": [{ "name": "", "type": "uint8" }]
+  },
+  {
+    "type": "function",
+    "name": "hasSkull",
+    "stateMutability": "view",
+    "inputs": [{ "name": "agentId", "type": "uint256" }],
+    "outputs": [{ "name": "", "type": "bool" }]
+  },
+  {
+    "type": "function",
+    "name": "supportsInterface",
+    "stateMutability": "view",
+    "inputs": [{ "name": "interfaceId", "type": "bytes4" }],
+    "outputs": [{ "name": "", "type": "bool" }]
+  },
+  {
+    "type": "event",
+    "name": "Locked",
+    "anonymous": false,
+    "inputs": [{ "name": "tokenId", "type": "uint256", "indexed": false }]
+  }
+]

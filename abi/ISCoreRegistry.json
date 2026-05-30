@@ -1,0 +1,64 @@
+[
+  {
+    "type": "function",
+    "name": "recordPayment",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      { "name": "agentId", "type": "uint256" },
+      { "name": "amount", "type": "uint256" },
+      { "name": "inputHash", "type": "bytes32" }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "lookup",
+    "stateMutability": "view",
+    "inputs": [{ "name": "inputHash", "type": "bytes32" }],
+    "outputs": [
+      { "name": "producer", "type": "address" },
+      { "name": "uri", "type": "string" },
+      { "name": "validUntil", "type": "uint64" },
+      { "name": "royaltyBps", "type": "uint16" }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "setScore",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      { "name": "agentId", "type": "uint256" },
+      { "name": "value", "type": "int256" },
+      { "name": "nonce", "type": "uint256" },
+      { "name": "sig", "type": "bytes" }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "markDefault",
+    "stateMutability": "nonpayable",
+    "inputs": [{ "name": "agentId", "type": "uint256" }],
+    "outputs": []
+  },
+  {
+    "type": "event",
+    "name": "PaymentRecorded",
+    "anonymous": false,
+    "inputs": [
+      { "name": "agentId", "type": "uint256", "indexed": true },
+      { "name": "amount", "type": "uint256", "indexed": false },
+      { "name": "inputHash", "type": "bytes32", "indexed": true },
+      { "name": "payer", "type": "address", "indexed": false }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "ScoreUpdated",
+    "anonymous": false,
+    "inputs": [
+      { "name": "agentId", "type": "uint256", "indexed": true },
+      { "name": "value", "type": "int256", "indexed": false }
+    ]
+  }
+]
