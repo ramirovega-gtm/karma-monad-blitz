@@ -16,7 +16,8 @@
  */
 import { pathToFileURL } from 'node:url';
 import express, { type Express, type Request, type Response } from 'express';
-import { MockReputationLayer, type ReputationLayer, type Hex } from './lib/reputation';
+import { type ReputationLayer, type Hex } from './lib/reputation';
+import { OnchainReputationLayer } from './lib/reputation.onchain';
 import { env } from './lib/env';
 import { getAgent, type AgentKind } from './agents';
 
@@ -232,7 +233,7 @@ export function startServer(
 const isMain = !!process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMain) {
   const port = Number(process.env.PORT ?? 4021);
-  startServer(new MockReputationLayer(), port).then(({ url }) => {
+  startServer(OnchainReputationLayer.fromEnv(), port).then(({ url }) => {
     console.log(`🟣 Karma x402 server en ${url}  (DEMO_SAFE=${env.DEMO_SAFE})`);
     console.log(`   POST ${url}/x402/agents/scraper  ·  POST ${url}/admin/markDefault/:agentId  ·  GET ${url}/health`);
   });

@@ -55,20 +55,39 @@ export interface AgentStats {
  * `fromBlock` por defecto 'earliest' (ok en anvil/local). En testnet, MERGE puede
  * pasar el bloque de deploy para evitar límites de rango del RPC en getLogs.
  */
+/** El RPC público de Monad limita `eth_getLogs` a 100 bloques por request. */
+const MAX_LOG_RANGE = 100n;
+/** Ventana hacia atrás por defecto cuando no se pasa `fromBlock` (cubre la corrida + algo de historia). */
+const DEFAULT_LOOKBACK = 500n;
+
 export async function readStats(
   registry: Hex,
   agentId: bigint,
   fromBlock: bigint | 'earliest' = 'earliest',
 ): Promise<AgentStats> {
-  const logs = await publicClient.getLogs({
-    address: registry,
-    event: PAYMENT_RECORDED,
-    args: { agentId },
-    fromBlock,
-    toBlock: 'latest',
-  });
-  const jobs = logs.length;
-  const volRaw = logs.reduce((sum, l) => sum + (l.args.amount ?? 0n), 0n);
+  const latest = await publicClient.getBlockNumber();
+  const start =
+    fromBlock === 'earliest'
+      ? latest > DEFAULT_LOOKBACK
+        ? latest - DEFAULT_LOOKBACK
+        : 0n
+      : fromBlock;
+
+  // Paginamos en ventanas de ≤100 bloques (límite del RPC público de Monad).
+  let jobs = 0;
+  let volRaw = 0n;
+  for (let lo = start; lo <= latest; lo += MAX_LOG_RANGE) {
+    const hi = lo + MAX_LOG_RANGE - 1n > latest ? latest : lo + MAX_LOG_RANGE - 1n;
+    const chunk = await publicClient.getLogs({
+      address: registry,
+      event: PAYMENT_RECORDED,
+      args: { agentId },
+      fromBlock: lo,
+      toBlock: hi,
+    });
+    jobs += chunk.length;
+    for (const l of chunk) volRaw += l.args.amount ?? 0n;
+  }
   return { jobs, volRaw, volUSDC: volRaw / USDC_DECIMALS };
 }
 

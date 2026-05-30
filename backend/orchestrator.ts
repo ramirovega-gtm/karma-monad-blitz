@@ -19,7 +19,8 @@
 import { pathToFileURL } from 'node:url';
 import { keccak256, toBytes } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { MockReputationLayer, type ReputationLayer, type Hex, type Artifact } from './lib/reputation';
+import { type ReputationLayer, type Hex, type Artifact } from './lib/reputation';
+import { OnchainReputationLayer } from './lib/reputation.onchain';
 import { env } from './lib/env';
 import { startServer, type PaymentRequirements, type PaymentPayload } from './server';
 import { getAgent, inputHashFor, FAIL_SENTINEL, type AgentKind } from './agents';
@@ -187,7 +188,7 @@ async function execStep(
 // Demo: cascada completa contra el mock.
 // ─────────────────────────────────────────────────────────────────────────────
 async function main() {
-  const reputation: ReputationLayer = new MockReputationLayer(); // ← MERGE: OnchainReputationLayer de C
+  const reputation: ReputationLayer = OnchainReputationLayer.fromEnv(); // MERGE: swap mock → on-chain real
   const { url, close } = await startServer(reputation);
   console.log(`\n🟣 Karma · economía de agentes  (DEMO_SAFE=${env.DEMO_SAFE}, ${url})\n`);
 

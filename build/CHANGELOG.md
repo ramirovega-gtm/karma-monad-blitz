@@ -16,16 +16,16 @@
 ## 📍 Estado actual
 
 ```
-FASE: 1 · Build (cimientos listos)
-S0 Cimientos:        ✅ hecho (mergeado a main)
-A  Contratos:        ⬜ listo para arrancar
-B  Economía agentes: ⬜ listo para arrancar
-C  Reputación chain: 🟡 layer + oráculo + bridge listos (offline OK; on-chain en MERGE)
-MERGE Integración:   ⬜ bloqueado por A+B+C
-FRONT (otra persona):⬜ se acopla después (repo aparte)
-ÚLTIMO PASO CERRADO: S0 · scaffold + lib + ABIs + mock (typecheck + smoke OK)
-PRÓXIMO PASO: abrir A, B y C en paralelo (worktree + branch por sesión)
+FASE: 2 · Integrado — LOOP CORE VERDE on-chain ✅
+S0 Cimientos:        ✅  ·  A Contratos: ✅ (deployado+verificado)
+B  Economía agentes: ✅  ·  C Reputación chain: ✅
+MERGE Integración:   ✅ loop core E2E real (recordPayment→evento→score→SBT) + 💀 SKULL on-chain
+FRONT (otra persona):⬜ se acopla (ya tiene addresses + ABIs + abi/fixtures.events.json)
+ÚLTIMO PASO CERRADO: MERGE · loop core en vivo en Monad testnet (designer→Skull verificado: hasSkull=true)
+PRÓXIMO PASO: polish/demo — prep de demo (ver notas) + opcional S1 si sobra tiempo
 BLOQUEOS: ninguno
+PREP DEMO: (1) saltear el input por corrida (el cache de artefactos persiste on-chain → reúso se dispara en re-runs);
+           (2) para mintear GoodPayer en vivo, subir volumen/jobs o bajar GOOD_THRESHOLD (score actual 10 < 70)
 ```
 
 Leyenda: ⬜ pendiente · 🟡 en progreso · ✅ hecho · ⛔ cortado (scope) · ⚠️ con riesgo/bloqueo
@@ -64,13 +64,15 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 - [x] `bridge.ts` (helpers viem read/write a ScoreRegistry + SBT, gas limit fijo, espera receipt)
 - [x] `lib/reputation.onchain.ts` (`OnchainReputationLayer implements ReputationLayer` + `fromEnv()`)
 - [x] Tests offline (`backend/_test.onchain.ts`): fórmula + recuperación de firma alineada con A — verdes
-- [ ] Tests anvil/testnet: `recordPayment`→event, `setScore`→event, `markDefault`→Skull (en MERGE, contra contratos de A)
+- [x] Tests anvil/testnet: `recordPayment`→event, `setScore`→event, `markDefault`→Skull (validado en MERGE contra contratos de A)
 
-### MERGE · Integración `integration/merge`
-- [ ] Merge a+b+c · swap Mock → `OnchainReputationLayer` (1 línea) · addresses reales
-- [ ] Loop core end-to-end verificable por explorer (pago→evento→score→SBT)
-- [ ] Beat regalía + beat calavera validados · `DEMO_SAFE` operativo
-- [ ] Publicar `abi/deployments.json` + ABIs + `abi/fixtures.events.json` (para el front) · 3 agentes fallback
+### MERGE · Integración `integration/merge` ✅
+- [x] Merge a+b+c · swap Mock → `OnchainReputationLayer.fromEnv()` (en `orchestrator.ts` + `server.ts`) · `.env` con addresses reales
+- [x] Loop core end-to-end **en vivo en Monad testnet** (recordPayment→PaymentRecorded→postScore→markDefault), typecheck limpio
+- [x] Beat regalía (scraper→regalía 500bps) + beat calavera (designer→Skull, `hasSkull=true` on-chain) · `DEMO_SAFE` operativo
+- [x] Fix integración: `oracle.readStats` pagina `getLogs` en ventanas de 100 (límite del RPC público de Monad)
+- [x] Publicado `abi/fixtures.events.json` (6 PaymentRecorded + 3 ScoreUpdated reales) para el front
+- [ ] (prep demo) 3 agentes precargados + saltear input por corrida + tuning GoodPayer (ver 📍)
 
 ### Stretch (solo si el loop core anda a las 15:00)
 - [ ] **S1** `ReverseAuction.sol`: `openJob` / `bid` (ponderado por reputación, calavera revierte) / `close`
@@ -83,6 +85,15 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 ## 📒 Log
 
 > Entradas nuevas arriba. Formato: `### [hora] — título` + bullets `Added/Changed/Fixed/Cut`.
+
+### [MERGE] — Integración: loop core verde on-chain
+- **Changed** — Swap mock→real: `new MockReputationLayer()` → `OnchainReputationLayer.fromEnv()` en `backend/orchestrator.ts` + `backend/server.ts` (única edición de código del MERGE). `.env` (gitignored) con addresses reales de A + claves descartables (DEPLOYER/ORACLE) de `karma-A`.
+- **Fixed** — `backend/oracle.ts` `readStats`: pagina `eth_getLogs` en ventanas de 100 bloques (el RPC público de Monad rechaza rangos mayores). Era el bloqueo que C anticipó.
+- **Verified (on-chain, Monad testnet)** — `npm run demo`: cascada → recordPayment (TXs reales) → postScore; beat regalía (scraper 500bps); **beat calavera: designer → `markDefault` → SKULL minteado** (`backend/_merge-verify.ts` confirma `hasSkull(3)=true`, agentes 1/2 sin calavera). typecheck limpio.
+- **Added** — `abi/fixtures.events.json`: 6 `PaymentRecorded` + 3 `ScoreUpdated` reales (con txHash/blockNumber) para que el front construya sin esperar al backend. `backend/_merge-verify.ts` (verificación + generador de fixtures).
+- **Added** — `build/STRETCH-x402-monad.md`: nota para migrar a `@x402/*` modular (settle real en Monad vía `eip155:10143`) — solo si el loop core está verde temprano.
+- **Note (prep demo)** — (1) el cache de artefactos es permanente on-chain → para una demo limpia, saltear el input por corrida o redeploy. (2) GoodPayer no se mintea con los montos actuales (score 10 < umbral 70) → subir volumen/jobs o bajar `GOOD_THRESHOLD`. El héroe (calavera) no se ve afectado.
+- **Next** — Polish + ensayo de demo. Opcional S1 (`ReverseAuction`) si sobra tiempo. Front se acopla con `abi/deployments.json` + ABIs + fixtures.
 
 ### [A] — Deploy a Monad testnet
 - **Added** — Contratos **deployados y verificados en Sourcify** (`exact_match`) en chain 10143:
