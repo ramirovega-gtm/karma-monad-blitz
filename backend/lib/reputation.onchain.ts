@@ -49,7 +49,7 @@ export class OnchainReputationLayer implements ReputationLayer {
     return bridge.writeRecordPayment(this.cfg.scoreRegistry, a, this.cfg.senderKey);
   }
 
-  /** El oráculo recalcula (desde el grafo on-chain), firma y postea el score. */
+  /** El oráculo recalcula (desde el grafo on-chain), firma (con domain separation) y postea el score. */
   async postScore(agentId: bigint): Promise<Hex> {
     const { value } = await oracle.computeScore(
       this.cfg.scoreRegistry,
@@ -57,7 +57,15 @@ export class OnchainReputationLayer implements ReputationLayer {
       this.cfg.fromBlock,
     );
     const nonce = oracle.nextNonce();
-    const sig = await oracle.signScore(this.cfg.oracleKey, agentId, value, nonce);
+    const chainId = BigInt(env.CHAIN_ID);
+    const sig = await oracle.signScore(
+      this.cfg.oracleKey,
+      agentId,
+      value,
+      nonce,
+      this.cfg.scoreRegistry,
+      chainId,
+    );
     return bridge.writeSetScore(this.cfg.scoreRegistry, agentId, value, nonce, sig, this.cfg.senderKey);
   }
 

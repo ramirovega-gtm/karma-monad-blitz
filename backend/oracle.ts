@@ -4,17 +4,19 @@
  * Recalcula el score de un agente desde el grafo on-chain (eventos PaymentRecorded),
  * lo firma con ORACLE_PRIVATE_KEY y deja todo listo para postear `setScore`.
  *
- * ── Esquema de firma (COORDINAR con Sesión A) ──────────────────────────────
+ * ── Esquema de firma (ALINEADO con la spec de Sesión A — fuente de verdad: contracts/README.md) ──
+ * A implementó `setScore` con DOMAIN SEPARATION: el digest incluye la address del
+ * ScoreRegistry y el chainId (más seguro: la firma no sirve en otro contrato ni otra red).
  * El contrato verifica con OZ `ECDSA` + `MessageHashUtils`:
  *
- *   bytes32 digest = keccak256(abi.encodePacked(agentId, value, nonce));   // uint256,int256,uint256
- *   bytes32 ethHash = MessageHashUtils.toEthSignedMessageHash(digest);     // prefijo EIP-191
+ *   bytes32 digest = keccak256(abi.encodePacked(
+ *     agentId, value, nonce, address(this), block.chainid));  // uint256,int256,uint256,address,uint256
+ *   bytes32 ethHash = MessageHashUtils.toEthSignedMessageHash(digest);   // prefijo EIP-191
  *   require(ECDSA.recover(ethHash, sig) == signer);
  *
  * Acá firmamos con `account.signMessage({ message: { raw: digest } })`, que aplica
  * EXACTAMENTE el mismo prefijo EIP-191 personal_sign → recupera al signer.
- * `nonce` es un valor único y creciente (ms epoch) → anti-replay: A debe exigir
- * nonce no usado / estrictamente mayor al último (NO una secuencia 0,1,2…).
+ * `nonce` es un valor único y creciente (ms epoch) → compatible con `nonceUsed[nonce]` de A.
  */
 import { encodePacked, keccak256, parseAbiItem } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
@@ -84,21 +86,38 @@ export async function computeScore(
   return { ...stats, value: scoreFromStats(stats.jobs, stats.volUSDC) };
 }
 
-/** Digest que firma el oráculo = keccak256(abi.encodePacked(agentId, value, nonce)). */
-export function scoreDigest(agentId: bigint, value: bigint, nonce: bigint): Hex {
-  return keccak256(encodePacked(['uint256', 'int256', 'uint256'], [agentId, value, nonce]));
+/**
+ * Digest que firma el oráculo, con domain separation (alineado con A):
+ *   keccak256(abi.encodePacked(agentId, value, nonce, scoreRegistry, chainId)).
+ * Orden y tipos EXACTOS: uint256, int256, uint256, address, uint256.
+ */
+export function scoreDigest(
+  agentId: bigint,
+  value: bigint,
+  nonce: bigint,
+  scoreRegistry: Hex,
+  chainId: bigint,
+): Hex {
+  return keccak256(
+    encodePacked(
+      ['uint256', 'int256', 'uint256', 'address', 'uint256'],
+      [agentId, value, nonce, scoreRegistry, chainId],
+    ),
+  );
 }
 
-/** Firma EIP-191 (personal_sign) del digest con la clave del oráculo. */
+/** Firma EIP-191 (personal_sign) del digest (con domain separation) con la clave del oráculo. */
 export async function signScore(
   oracleKey: Hex,
   agentId: bigint,
   value: bigint,
   nonce: bigint,
+  scoreRegistry: Hex,
+  chainId: bigint,
 ): Promise<Hex> {
   const account = privateKeyToAccount(oracleKey);
   return (await account.signMessage({
-    message: { raw: scoreDigest(agentId, value, nonce) },
+    message: { raw: scoreDigest(agentId, value, nonce, scoreRegistry, chainId) },
   })) as Hex;
 }
 

@@ -41,20 +41,38 @@ async function main() {
   const agentId = 42n;
   const value = 73n;
   const nonce = 1717171717171n;
-  const sig = await signScore(TEST_KEY, agentId, value, nonce);
+  // domain separation (alineado con A): address del ScoreRegistry + chainId de prueba.
+  const registry = '0x1111111111111111111111111111111111111111' as Hex;
+  const chainId = 10143n;
+  const sig = await signScore(TEST_KEY, agentId, value, nonce, registry, chainId);
   const recovered = await recoverMessageAddress({
-    message: { raw: scoreDigest(agentId, value, nonce) },
+    message: { raw: scoreDigest(agentId, value, nonce, registry, chainId) },
     signature: sig,
   });
-  check('firma válida recupera al signer', recovered.toLowerCase() === signer.toLowerCase(), recovered);
+  check('firma válida (5 campos) recupera al signer', recovered.toLowerCase() === signer.toLowerCase(), recovered);
 
   // sanity anti-replay: distinto nonce → distinta firma (digest distinto)
-  const sig2 = await signScore(TEST_KEY, agentId, value, nonce + 1n);
+  const sig2 = await signScore(TEST_KEY, agentId, value, nonce + 1n, registry, chainId);
   check('nonce distinto → firma distinta', sig !== sig2);
+
+  // domain separation: misma (agentId,value,nonce) en OTRO contrato → NO recupera al signer original
+  const wrongRegistry = '0x2222222222222222222222222222222222222222' as Hex;
+  const otherDomain = await recoverMessageAddress({
+    message: { raw: scoreDigest(agentId, value, nonce, wrongRegistry, chainId) },
+    signature: sig,
+  });
+  check('otro ScoreRegistry NO recupera al signer (domain separation)', otherDomain.toLowerCase() !== signer.toLowerCase());
+
+  // domain separation: misma firma en OTRA red → NO recupera al signer
+  const otherChain = await recoverMessageAddress({
+    message: { raw: scoreDigest(agentId, value, nonce, registry, chainId + 1n) },
+    signature: sig,
+  });
+  check('otro chainId NO recupera al signer (domain separation)', otherChain.toLowerCase() !== signer.toLowerCase());
 
   // sanity: una firma de OTRO valor NO recupera al signer para el digest original
   const wrongRecovered = await recoverMessageAddress({
-    message: { raw: scoreDigest(agentId, value + 1n, nonce) },
+    message: { raw: scoreDigest(agentId, value + 1n, nonce, registry, chainId) },
     signature: sig,
   });
   check('digest manipulado NO recupera al signer', wrongRecovered.toLowerCase() !== signer.toLowerCase());
