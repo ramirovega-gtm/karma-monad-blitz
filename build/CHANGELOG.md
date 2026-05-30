@@ -19,8 +19,8 @@
 FASE: 3 · Front MERGEADO a main ✅ — todo el stack en main
 S0 ✅ · A ✅ · B ✅ · C ✅ · MERGE ✅ · S1 ✅ · FRONT ✅  (on-chain + pusheado; PR #1 mergeado)
 FRONT: ✅ `frontend/` en main (Next 16 + React Flow + viem) — 5 pantallas + grafo en vivo + showstopper. Verificado: core loop intacto (archivos core sin tocar + typecheck), sin secretos (repo público OK)
-ÚLTIMO PASO CERRADO: merge PR #1 (804c827) → frontend/ + backend/api.ts en main
-PRÓXIMO PASO: deploy a Vercel (Root Directory=`frontend`, sin env vars) + ensayo de demo + (opcional) cableo WS en vivo
+ÚLTIMO PASO CERRADO: demo guiada (overlay 3 min) + sección "lado oferta" (/crear) — branch session/front-demo, build verde
+PRÓXIMO PASO: mergear PR session/front-demo + deploy a Vercel (Root Directory=`frontend`, sin env vars) + ensayo
 BLOQUEOS: ninguno
 DEMO BACKEND LISTO: reúso/regalía · GoodPayer · 💀 Skull · subasta (bid-weighting + calavera revierte) — todo on-chain
 ADDRESSES: ScoreRegistry 0x9402…966C · ReputationSBT 0x75da…a3aE · ReverseAuction 0x7ca6…b459 (ver abi/deployments.json)
@@ -97,6 +97,13 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 ## 📒 Log
 
 > Entradas nuevas arriba. Formato: `### [hora] — título` + bullets `Added/Changed/Fixed/Cut`.
+
+### [FRONT-demo] — Demo guiada (3 min) + lado oferta (crear/vender agentes)
+- **Added** — `frontend/src/components/GuidedDemo.tsx`: overlay narrado de ~3 min (`DemoProvider`/`useDemo`) que maneja la app en vivo — 7 pasos (problema → dos lados → Atlas orquesta → grafo/pagos → reúso → calavera/muro → subasta+por qué Monad), auto-avance + Pausa/Siguiente/Anterior/Salir. Reusa el motor (`reset`/`hireAtlas`/`runAuction`). Botón "▶ Demo guiada" en el Header; montado en `layout.tsx`.
+- **Added** — Sección "lado oferta": `components/SupplyBand.tsx` (banda arriba del marketplace, 2 CTAs) + página `app/crear/page.tsx` (flujo experto no-técnico con wizard + matchmaking con builders + Atlas, flujo builder técnico, y Academia de tutoriales). Nav "Crear / Vender".
+- **Added** — `state/karma.tsx`: `customAgents` + `publishAgent(draft)` (persistido) mergeado en el memo `agents` → el agente publicado aparece en el marketplace y en su perfil. Tipo `PublishDraft`.
+- **Verified** — `npm run build` (frontend) verde: compila, TypeScript OK, 9 rutas (incl. `/crear` prerenderizada). 100% client-side/simulado; backend/contratos/loop core intactos.
+- **Next** — Mergear PR `session/front-demo` → `main` + deploy a Vercel.
 
 ### [FRONT-merge] — PR #1 mergeado a main (orquestación)
 - **Verified** — Seguridad (repo público): sin secretos trackeados (solo `.env.example`); refs a `*_PRIVATE_KEY` son nombres de var, no valores; `.env`/`.env.local`/`node_modules` ignorados.

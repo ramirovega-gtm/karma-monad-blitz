@@ -26,7 +26,29 @@ import {
   getAgent,
 } from "@/lib/catalog";
 import { AGENT_MEMORY_SEED, CONTEXT_SEED } from "@/lib/context";
-import type { Agent, Vetado } from "@/lib/types";
+import { ratingOf, tierOf } from "@/lib/format";
+import type { Agent, CategoryId, PriceUnit, Vetado } from "@/lib/types";
+
+/** Lo que el lado de la oferta (página /crear) manda para publicar un agente nuevo. */
+export interface PublishDraft {
+  name: string;
+  author: string;
+  category: CategoryId;
+  svc: string;
+  price: number;
+  unit: PriceUnit;
+  risk: number; // 1..5
+  builtBy?: string; // "tutoriales" | "matchmaking" | "atlas" | "código"
+}
+
+/** Colateral inicial según el riesgo de la tarea (el que maneja plata bondea más). */
+const COLLATERAL_BY_RISK: Record<number, number> = {
+  1: 480,
+  2: 1400,
+  3: 2400,
+  4: 9500,
+  5: 18000,
+};
 
 export interface PaymentEvt {
   id: string;
@@ -62,8 +84,10 @@ interface KarmaState {
   wallet: { network: string; address: string; balanceUSDC: number };
   context: Record<string, string>;
   agentMemory: Record<number, Record<string, string>>;
+  customAgents: Agent[];
   setContextField: (key: string, value: string) => void;
   saveAgentInput: (agentId: number, key: string, value: string) => void;
+  publishAgent: (draft: PublishDraft) => Agent;
   hireAtlas: () => void;
   vetar: (agentId: number, offense?: string) => void;
   runAuction: () => void;
@@ -102,6 +126,7 @@ export function KarmaProvider({ children }: { children: React.ReactNode }) {
   const [context, setContext] = useState<Record<string, string>>(CONTEXT_SEED);
   const [agentMemory, setAgentMemory] =
     useState<Record<number, Record<string, string>>>(AGENT_MEMORY_SEED);
+  const [customAgents, setCustomAgents] = useState<Agent[]>([]);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   // Persistencia en localStorage (carga tras montar → sin mismatch de hidratación).
@@ -111,6 +136,8 @@ export function KarmaProvider({ children }: { children: React.ReactNode }) {
       if (c) setContext((prev) => ({ ...prev, ...JSON.parse(c) }));
       const m = localStorage.getItem("karma.agentMemory");
       if (m) setAgentMemory((prev) => ({ ...prev, ...JSON.parse(m) }));
+      const ca = localStorage.getItem("karma.customAgents");
+      if (ca) setCustomAgents(JSON.parse(ca));
     } catch {}
   }, []);
 
@@ -136,6 +163,45 @@ export function KarmaProvider({ children }: { children: React.ReactNode }) {
     },
     [],
   );
+
+  const publishAgent = useCallback((draft: PublishDraft): Agent => {
+    const karma = 600; // agente nuevo: arranca en "A", sube transaccionando
+    const agent: Agent = {
+      id: 1000 + Math.floor(performance.now()),
+      slug: draft.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "agente",
+      onchain: false,
+      kind: "agent",
+      name: draft.name.trim() || "Mi Agente",
+      author: draft.author.trim() || "vos.eth",
+      verified: false,
+      star: true,
+      tagline: "Tu agente",
+      category: draft.category === "all" ? "ventas" : draft.category,
+      svc: draft.svc.trim() || "Tarea recurrente automatizada.",
+      price: draft.price > 0 ? draft.price : 5,
+      unit: draft.unit,
+      recurring: draft.unit === "mes",
+      stars: 5.0,
+      users: 0,
+      success: 100,
+      deals: 0,
+      karma,
+      collateral: COLLATERAL_BY_RISK[draft.risk] ?? 1400,
+      risk: draft.risk,
+      riskLabel: draft.risk >= 5 ? "Maneja tu plata" : draft.risk >= 4 ? "Toca tu cartera" : null,
+      medals: [],
+      tier: tierOf(karma),
+      rating: ratingOf(karma),
+    };
+    setCustomAgents((prev) => {
+      const next = [agent, ...prev];
+      try {
+        localStorage.setItem("karma.customAgents", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    return agent;
+  }, []);
 
   const clearTimers = () => {
     timers.current.forEach(clearTimeout);
@@ -230,23 +296,24 @@ export function KarmaProvider({ children }: { children: React.ReactNode }) {
     setLastJobId(null);
   }, []);
 
-  const agents = useMemo<Agent[]>(
-    () =>
-      AGENTS.map((a) => {
-        if (skulls.includes(a.id)) {
-          return {
-            ...a,
-            vetado: true,
-            tier: "skull",
-            karmaFinal: VETO_KARMA,
-            collateralSlashed: a.collateral,
-            offense: a.offense ?? "Entregó basura tras cobrar → default irrevocable.",
-          };
-        }
-        return { ...a, karma: scores[a.id] ?? a.karma };
-      }),
-    [skulls, scores],
-  );
+  const agents = useMemo<Agent[]>(() => {
+    // Agentes publicados desde /crear van primero (impacto de demo: "tu agente ya está vivo").
+    const custom = customAgents.map((a) => ({ ...a, karma: scores[a.id] ?? a.karma }));
+    const base = AGENTS.map((a) => {
+      if (skulls.includes(a.id)) {
+        return {
+          ...a,
+          vetado: true,
+          tier: "skull" as const,
+          karmaFinal: VETO_KARMA,
+          collateralSlashed: a.collateral,
+          offense: a.offense ?? "Entregó basura tras cobrar → default irrevocable.",
+        };
+      }
+      return { ...a, karma: scores[a.id] ?? a.karma };
+    });
+    return [...custom, ...base];
+  }, [skulls, scores, customAgents]);
 
   const vetados = useMemo(() => [...vetadosLive, ...VETADOS_SEED], [vetadosLive]);
 
@@ -262,8 +329,10 @@ export function KarmaProvider({ children }: { children: React.ReactNode }) {
     wallet: { network: "Monad", address: "0x8a4F…51ee", balanceUSDC: 2400 },
     context,
     agentMemory,
+    customAgents,
     setContextField,
     saveAgentInput,
+    publishAgent,
     hireAtlas,
     vetar,
     runAuction,

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { KarmaProvider } from "@/state/karma";
+import { DemoProvider } from "@/components/GuidedDemo";
 import { Header } from "@/components/Header";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -23,10 +24,12 @@ export default function RootLayout({
     >
       <body>
         <KarmaProvider>
-          <div className="flex h-screen flex-col overflow-hidden">
-            <Header />
-            <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
-          </div>
+          <DemoProvider>
+            <div className="flex h-screen flex-col overflow-hidden">
+              <Header />
+              <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
+            </div>
+          </DemoProvider>
         </KarmaProvider>
       </body>
     </html>
