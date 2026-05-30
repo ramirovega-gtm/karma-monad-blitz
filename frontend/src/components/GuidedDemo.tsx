@@ -21,57 +21,51 @@ interface Step {
   ms: number;
 }
 
+// Cada paso NAVEGA a una vista distinta → la demo fluye y recorre todo el producto.
 const STEPS: Step[] = [
   {
     tag: "01 · El problema",
     title: "La capa de confianza de la economía de agentes",
-    body: "En Karma delegás tareas a agentes de IA que cobran por resultado. Cada pago queda on-chain y construye su reputación —su “karma”—. Sin reputación, contratar un agente es a ciegas: eso es lo que resolvemos.",
+    body: "Este es el marketplace: delegás tareas a agentes de IA que cobran por resultado. Cada uno tiene un karma on-chain. Sin reputación, contratar un agente es a ciegas — eso es lo que Karma resuelve.",
     route: "/",
-    ms: 22000,
-  },
-  {
-    tag: "02 · Dos lados del mercado",
-    title: "No solo se delega: también se ofrece conocimiento",
-    body: "Abajo, la demanda: gente que delega lo que odia. Arriba, la oferta: un experto en un sector convierte lo que sabe en un agente que trabaja y genera ingresos —con tutoriales o matcheándose con un builder—. No hace falta programar.",
-    route: "/",
-    ms: 24000,
-  },
-  {
-    tag: "03 · Atlas orquesta",
-    title: "Le pedís un objetivo a Atlas y él arma la solución",
-    body: "Atlas es el orquestador: recibe la tarea y sale a buscar, contratar y pagar a los agentes especializados que la resuelven, sin que muevas un dedo. Mirá el grafo crecer en vivo.",
-    route: "/procedencia",
-    action: "hire",
-    ms: 30000,
-  },
-  {
-    tag: "04 · Pago = reputación",
-    title: "Cada pago es una arista on-chain",
-    body: "Atlas paga por-resultado vía x402 (USDC, gasless). Cada pago escribe una arista en el grafo y le sube el karma al agente que entregó. La confianza se gana transaccionando.",
-    route: "/procedencia",
-    ms: 24000,
-  },
-  {
-    tag: "05 · Memoria de la red",
-    title: "Nadie paga dos veces lo mismo",
-    body: "Si un resultado ya existe y sigue vigente, el sistema paga una regalía chica al productor original en vez de rehacer el trabajo. El comprador ahorra, el productor cobra pasivo, la red no quema cómputo.",
-    route: "/procedencia",
-    ms: 22000,
-  },
-  {
-    tag: "06 · La consecuencia",
-    title: "La calavera es para siempre",
-    body: "Un agente cobró y entregó basura. Recibe un SBT calavera irrevocable on-chain: su colateral se slashea y queda excluido del mercado. Acá no importa quién sos; importa qué hiciste.",
-    route: "/muro",
     ms: 26000,
   },
   {
-    tag: "07 · Por qué Monad",
+    tag: "02 · El otro lado del mercado",
+    title: "Vendé tu conocimiento o creá tu agente",
+    body: "Acá está la oferta: un experto en un sector convierte lo que sabe en un agente que trabaja y genera ingresos (con tutoriales o matcheándose con un builder), y los técnicos publican los suyos. No hace falta programar.",
+    route: "/crear",
+    ms: 28000,
+  },
+  {
+    tag: "03 · Memoria y contexto",
+    title: "El sistema recuerda — por eso nadie paga dos veces",
+    body: "Karma guarda tu contexto y la memoria de cada agente. Si un resultado ya existe y sigue vigente, se paga una regalía chica al productor original en vez de rehacer el trabajo: el comprador ahorra, el productor cobra pasivo.",
+    route: "/contexto",
+    ms: 26000,
+  },
+  {
+    tag: "04 · Atlas orquesta",
+    title: "Le pedís un objetivo y Atlas arma la solución, en vivo",
+    body: "Atlas contrata y paga a los agentes especializados vía x402 (USDC, gasless). Cada pago escribe una arista on-chain y sube el karma del que entregó — mirá el grafo crecer. La confianza se gana transaccionando.",
+    route: "/procedencia",
+    action: "hire",
+    ms: 34000,
+  },
+  {
+    tag: "05 · La consecuencia",
+    title: "La calavera es para siempre",
+    body: "Uno de los agentes cobró y entregó basura. Recibe un SBT calavera irrevocable on-chain: su colateral se slashea y queda excluido del mercado. Acá no importa quién sos; importa qué hiciste.",
+    route: "/muro",
+    ms: 28000,
+  },
+  {
+    tag: "06 · Subasta + por qué Monad",
     title: "El bid del vetado se rechaza on-chain",
     body: "En la subasta inversa, el agente con calavera ni siquiera puede pujar: su bid revierte en el contrato. Mejor reputación = mejores términos. Recalcular karma y mintear en cada interacción solo cierra en Monad: gas ~0 y sub-segundo.",
     route: "/procedencia",
     action: "auction",
-    ms: 30000,
+    ms: 34000,
   },
 ];
 

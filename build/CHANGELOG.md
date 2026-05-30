@@ -98,6 +98,9 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 
 > Entradas nuevas arriba. Formato: `### [hora] — título` + bullets `Added/Changed/Fixed/Cut`.
 
+### [FRONT-fix2] — Demo guiada: cada paso ahora cambia de vista
+- **Changed** — Reescrito el guión de `GuidedDemo` a 6 pasos donde **cada uno navega a una ruta distinta** (antes el paso 2 quedaba en `/` y 3-5 en `/procedencia` → no cambiaba la vista): `/` → `/crear` (lado oferta) → `/contexto` (memoria/reúso) → `/procedencia` (+Atlas, grafo en vivo) → `/muro` (calavera) → `/procedencia` (+subasta, por qué Monad). Recorre todo el producto con fluidez. Verificado con Chrome headless: cada paso aterriza en la ruta esperada.
+
 ### [FRONT-fix] — Overlay de la demo no aparecía (quedaba fuera del viewport)
 - **Fixed** — `GuidedDemo`: el overlay es hijo directo de `<body>`, y la regla **sin `@layer`** `body > * { position: relative; z-index: 1 }` de `globals.css` le ganaba (las reglas sin capa pisan a las utilities de Tailwind) → el `fixed` se volvía `relative` y la tarjeta quedaba empujada abajo del shell de 100vh, fuera de pantalla (la demo avanzaba "por detrás"). Se fuerza `position:fixed`/`zIndex:60` por estilo inline (gana sobre la regla sin capa). Verificado con Chrome headless: posición `fixed`, dentro del viewport.
 
