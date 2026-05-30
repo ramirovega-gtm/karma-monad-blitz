@@ -50,11 +50,11 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 - [ ] Tests Foundry verdes + `Deploy.s.sol`
 - [ ] Deploy testnet + Sourcify → `abi/deployments.json` + ABIs reales (matchean `abi/I*.json`)
 
-### B · Economía de agentes `session/b-agentes`
-- [ ] `server.ts` (x402, endpoint 402, `recordPayment` tras settle, `DEMO_SAFE`)
-- [ ] `agents/` (2-3 proveedores) + `orchestrator.ts` (lookup→pagar/regalía→record→postScore)
-- [ ] Beat regalía + beat calavera (`markDefault`) contra `MockReputationLayer`
-- [ ] Loop de economía corre aislado (`npx tsx orchestrator.ts`)
+### B · Economía de agentes `session/b-agentes` ✅
+- [x] `server.ts` (x402, endpoint 402, `recordPayment` tras settle, `DEMO_SAFE`)
+- [x] `agents/` (3 proveedores: scraper/analyst/designer) + `orchestrator.ts` (lookup→pagar/regalía→record→postScore)
+- [x] Beat regalía + beat calavera (`markDefault`) contra `MockReputationLayer`
+- [x] Loop de economía corre aislado (`npx tsx backend/orchestrator.ts` · `npm run demo`)
 
 ### C · Reputación on-chain `session/c-oraculo`
 - [ ] `oracle.ts` (fórmula + firma ECDSA + `setScore`)
@@ -79,6 +79,15 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 ## 📒 Log
 
 > Entradas nuevas arriba. Formato: `### [hora] — título` + bullets `Added/Changed/Fixed/Cut`.
+
+### [B] — Economía de agentes (x402 + cascada + 3 beats)
+- **Added** — `backend/agents/` (scraper/analyst/designer determinísticos, offline) + `hash.ts` (`inputHashFor`/`payloadHash`, sentinel `__FAIL__`) + `index.ts` (registro `getAgent`/`listAgents`).
+- **Added** — `backend/server.ts`: server Express con handshake x402 spec-shaped (402 + `accepts` PaymentRequirements → `X-PAYMENT` base64 → settle → `X-PAYMENT-RESPONSE`). Tras settle OK invoca `reputation.recordPayment` (el puente pago→arista del grafo). Ruta admin `POST /admin/markDefault/:agentId` para el beat calavera. `createServer(reputation)` + `startServer()` + entrypoint standalone (`npm run server`, `GET /health`).
+- **Added** — `backend/orchestrator.ts`: cliente x402 + cascada `lookup → pagar/regalía → recordPayment → postScore → markDefault`. Demo in-process (`npm run demo`): cascada (scraper+analyst GoodPayer) → beat reúso (scraper otra vez → regalía 500bps) → beat calavera (designer entrega basura → SKULL). Firma EIP-3009 real cableada en el camino `DEMO_SAFE=false` (guardada).
+- **Changed** — `package.json` (compartido): agregadas deps `express`, `x402`, `x402-express`, `x402-fetch` + dev `@types/express`, y scripts `demo`/`server`. ⚠️ **coordinar el merge de `package.json`/`package-lock.json`** con A/C.
+- **Cut** — Llamadas a Claude en los agentes (artefactos determinísticos → demo offline y reproducible). Camino live del facilitator implementado pero **no ejercitado**: x402 v1.2.0 NO soporta Monad (enum `network` sin 10143) → `DEMO_SAFE` es el camino operativo (el grafo no depende del facilitator en vivo, como manda CLAUDE.md).
+- **Verified** — `npm run typecheck` limpio · `npm run demo` corre el loop completo (3 beats) · server standalone responde `402` sin pago y `200` en `/health`.
+- **Next** — MERGE: cambiar `new MockReputationLayer()` por `OnchainReputationLayer` de C (1 línea en `orchestrator.ts` y, si se usa standalone, en `server.ts`). Nada más del código de B se toca.
 
 ### [S0] — Cimientos
 - **Added** — Scaffold + superficies compartidas (congeladas): `package.json`, `tsconfig.json`, `.gitignore`, `.env.example`; `backend/lib/{types,env,chain,reputation}.ts` (interfaz `ReputationLayer` + `MockReputationLayer`) + `_smoke.ts`; `abi/{ISCoreRegistry,IReputationSBT,deployments}.json`; placeholders `contracts/` y `backend/agents/`.
