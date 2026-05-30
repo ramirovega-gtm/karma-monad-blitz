@@ -20,7 +20,7 @@ FASE: 1 · Build (cimientos listos)
 S0 Cimientos:        ✅ hecho (mergeado a main)
 A  Contratos:        ⬜ listo para arrancar
 B  Economía agentes: ⬜ listo para arrancar
-C  Reputación chain: ⬜ listo para arrancar
+C  Reputación chain: 🟡 layer + oráculo + bridge listos (offline OK; on-chain en MERGE)
 MERGE Integración:   ⬜ bloqueado por A+B+C
 FRONT (otra persona):⬜ se acopla después (repo aparte)
 ÚLTIMO PASO CERRADO: S0 · scaffold + lib + ABIs + mock (typecheck + smoke OK)
@@ -57,10 +57,11 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 - [ ] Loop de economía corre aislado (`npx tsx orchestrator.ts`)
 
 ### C · Reputación on-chain `session/c-oraculo`
-- [ ] `oracle.ts` (fórmula + firma ECDSA + `setScore`)
-- [ ] `bridge.ts` (helpers viem read/write a ScoreRegistry)
-- [ ] `lib/reputation.onchain.ts` (`OnchainReputationLayer implements ReputationLayer`)
-- [ ] Tests anvil/testnet: `recordPayment`→event, `setScore`→event, `markDefault`→Skull
+- [x] `oracle.ts` (fórmula `min(100, jobs*10 + volUSDC/10)` desde eventos PaymentRecorded + firma ECDSA EIP-191 + nonce)
+- [x] `bridge.ts` (helpers viem read/write a ScoreRegistry + SBT, gas limit fijo, espera receipt)
+- [x] `lib/reputation.onchain.ts` (`OnchainReputationLayer implements ReputationLayer` + `fromEnv()`)
+- [x] Tests offline (`backend/_test.onchain.ts`): fórmula + recuperación de firma alineada con A — verdes
+- [ ] Tests anvil/testnet: `recordPayment`→event, `setScore`→event, `markDefault`→Skull (en MERGE, contra contratos de A)
 
 ### MERGE · Integración `integration/merge`
 - [ ] Merge a+b+c · swap Mock → `OnchainReputationLayer` (1 línea) · addresses reales
@@ -79,6 +80,15 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 ## 📒 Log
 
 > Entradas nuevas arriba. Formato: `### [hora] — título` + bullets `Added/Changed/Fixed/Cut`.
+
+### [C] — Reputación on-chain (oráculo + puente)
+- **Added** — `backend/bridge.ts`: helpers viem read/write a ScoreRegistry (`readLookup`, `writeRecordPayment`, `writeSetScore`, `writeMarkDefault`) + SBT (`readHasSkull`, `readTier`). Gas limit fijo (Monad cobra por límite) y espera de receipt para ordenar pago→lectura de logs.
+- **Added** — `backend/oracle.ts`: fórmula fija `score = min(100, jobs*10 + volUSDC/10)` calculada desde los eventos `PaymentRecorded` on-chain; firma ECDSA del digest `keccak256(abi.encodePacked(agentId,value,nonce))` vía EIP-191 personal_sign (`signMessage({message:{raw}})`); `nextNonce()` = ms epoch (anti-replay).
+- **Added** — `backend/lib/reputation.onchain.ts`: `OnchainReputationLayer implements ReputationLayer` (orquesta bridge+oracle) + `fromEnv()` para el swap de 1 línea en MERGE.
+- **Added** — `backend/_test.onchain.ts`: tests offline (fórmula + que la firma recupera al signer). Verdes. `tsc --noEmit` limpio.
+- **Changed** — Solo FILES I OWN + CHANGELOG sección C. `lib/reputation.ts` no se tocó (se implementa).
+- **⚠️ COORDINAR con A** — Esquema de firma de `setScore`: el contrato debe verificar `ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(keccak256(abi.encodePacked(agentId,value,nonce))), sig) == signer`, con `agentId:uint256, value:int256, nonce:uint256`. Anti-replay: `nonce` único/creciente (NO secuencia desde 0). El `signer` del contrato = address de `ORACLE_PRIVATE_KEY` (`oracleAddress()`).
+- **Next** — MERGE: setear `SCORE_REGISTRY`/`REPUTATION_SBT` reales (de A), swap `new MockReputationLayer()` → `OnchainReputationLayer.fromEnv()`, y validar on-chain (recordPayment→event, setScore→ScoreUpdated, markDefault→Skull). Opcional: pasar `fromBlock` = bloque de deploy si el RPC limita rango de getLogs.
 
 ### [S0] — Cimientos
 - **Added** — Scaffold + superficies compartidas (congeladas): `package.json`, `tsconfig.json`, `.gitignore`, `.env.example`; `backend/lib/{types,env,chain,reputation}.ts` (interfaz `ReputationLayer` + `MockReputationLayer`) + `_smoke.ts`; `abi/{ISCoreRegistry,IReputationSBT,deployments}.json`; placeholders `contracts/` y `backend/agents/`.
