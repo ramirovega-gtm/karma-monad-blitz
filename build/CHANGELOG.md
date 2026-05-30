@@ -16,11 +16,11 @@
 ## 📍 Estado actual
 
 ```
-FASE: 3 · Front (EN CURSO) — backend + contratos + S1 COMPLETOS ✅
-S0 ✅ · A ✅ · B ✅ · C ✅ · MERGE ✅ · S1 ✅  (todo on-chain, en main, pusheado)
-FRONT: 🟡 `frontend/` ARMADO (Next 16 + React Flow + viem) — 5 pantallas + grafo en vivo + showstopper
-ÚLTIMO PASO CERRADO: frontend/ con marketplace + Procedencia (grafo) + Muro + Detalle + Registrar; backend/api.ts (job/auction)
-PRÓXIMO PASO: ensayo de demo + (opcional) cableo WS en vivo + deploy a Vercel
+FASE: 3 · Front MERGEADO a main ✅ — todo el stack en main
+S0 ✅ · A ✅ · B ✅ · C ✅ · MERGE ✅ · S1 ✅ · FRONT ✅  (on-chain + pusheado; PR #1 mergeado)
+FRONT: ✅ `frontend/` en main (Next 16 + React Flow + viem) — 5 pantallas + grafo en vivo + showstopper. Verificado: core loop intacto (archivos core sin tocar + typecheck), sin secretos (repo público OK)
+ÚLTIMO PASO CERRADO: merge PR #1 (804c827) → frontend/ + backend/api.ts en main
+PRÓXIMO PASO: deploy a Vercel (Root Directory=`frontend`, sin env vars) + ensayo de demo + (opcional) cableo WS en vivo
 BLOQUEOS: ninguno
 DEMO BACKEND LISTO: reúso/regalía · GoodPayer · 💀 Skull · subasta (bid-weighting + calavera revierte) — todo on-chain
 ADDRESSES: ScoreRegistry 0x9402…966C · ReputationSBT 0x75da…a3aE · ReverseAuction 0x7ca6…b459 (ver abi/deployments.json)
@@ -97,6 +97,12 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 ## 📒 Log
 
 > Entradas nuevas arriba. Formato: `### [hora] — título` + bullets `Added/Changed/Fixed/Cut`.
+
+### [FRONT-merge] — PR #1 mergeado a main (orquestación)
+- **Verified** — Seguridad (repo público): sin secretos trackeados (solo `.env.example`); refs a `*_PRIVATE_KEY` son nombres de var, no valores; `.env`/`.env.local`/`node_modules` ignorados.
+- **Verified** — Loop core intacto: el front NO tocó `orchestrator.ts`/`oracle.ts`/`bridge.ts`/`reputation*.ts`/`contracts/`; `server.ts` solo suma CORS + monta `/api` (aditivo); `typecheck` limpio. (Demo en vivo redundante.)
+- **Changed** — Mergeado PR #1 (`session/front` → `main`, commit 804c827) vía `gh`. Local sincronizado.
+- **Next** — Deploy a Vercel (Root Directory=`frontend`, sin env vars). Ensayo de demo.
 
 ### [FRONT-apify] — Marketplace reestructurado al layout de Apify Store
 - **Changed** — Distribución portada de apify.com/store manteniendo el brand de Karma: **search hero arriba**, **sidebar izquierdo de filtros** (Categorías con contadores + Modelo de precio + Nivel de riesgo + toggle "Solo oficiales"), fila de **orden + contador de resultados**, **grid 3-col**.
