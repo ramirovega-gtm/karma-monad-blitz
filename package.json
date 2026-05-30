@@ -8,6 +8,7 @@
     "smoke": "tsx backend/lib/_smoke.ts",
     "typecheck": "tsc --noEmit",
     "demo": "tsx backend/orchestrator.ts",
+    "auction": "tsx backend/auction.ts",
     "server": "tsx backend/server.ts"
   },
   "dependencies": {

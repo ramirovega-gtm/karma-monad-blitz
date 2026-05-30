@@ -22,9 +22,10 @@ B  Economía agentes: ✅  ·  C Reputación chain: ✅
 MERGE Integración:   ✅ loop core E2E real (recordPayment→evento→score→SBT) + 💀 SKULL on-chain
 FRONT (otra persona):⬜ se acopla (ya tiene addresses + ABIs + abi/fixtures.events.json)
 ÚLTIMO PASO CERRADO: MERGE+polish · 4 beats verificados on-chain (GoodPayer SBT agente#2 + Skull agente#3)
-PRÓXIMO PASO: ensayo de demo + 3 agentes precargados (fallback) + opcional S1 si sobra tiempo
+PRÓXIMO PASO: ensayo de demo + 3 agentes precargados (fallback)
 BLOQUEOS: ninguno
-DEMO LISTO: reúso limpio (salt por corrida) · analyst score 80 → GoodPayer minteado · designer → Skull · todo on-chain
+DEMO LISTO: loop core (reúso/regalía · GoodPayer · 💀 Skull) + S1 subasta (bid-weighting + bid de calavera revierte) · todo on-chain
+STRETCH S1: ✅ ReverseAuction deployado/verificado — `npm run auction`
 ```
 
 Leyenda: ⬜ pendiente · 🟡 en progreso · ✅ hecho · ⛔ cortado (scope) · ⚠️ con riesgo/bloqueo
@@ -73,8 +74,9 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 - [x] Publicado `abi/fixtures.events.json` (6 PaymentRecorded + 3 ScoreUpdated reales) para el front
 - [ ] (prep demo) 3 agentes precargados + saltear input por corrida + tuning GoodPayer (ver 📍)
 
-### Stretch (solo si el loop core anda a las 15:00)
-- [ ] **S1** `ReverseAuction.sol`: `openJob` / `bid` (ponderado por reputación, calavera revierte) / `close`
+### Stretch ✅
+- [x] **S1** `ReverseAuction.sol`: `openJob` / `bid` (ponderado por reputación, calavera revierte) / `close` — deployado + verificado + validado en vivo
+  - `ReverseAuction` = `0x7ca67a992100ff9CF95f72c70c20a84A9E17b459` (Sourcify) · 22/22 tests · `npm run auction`
 
 ### ⛔ Cortado por scope (NO se construye)
 - LoanManager · LiquidationEngine · AI risk engine real (→ fórmula fija firmada) · escribir en ERC-8004 (solo lectura).
@@ -84,6 +86,12 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 ## 📒 Log
 
 > Entradas nuevas arriba. Formato: `### [hora] — título` + bullets `Added/Changed/Fixed/Cut`.
+
+### [S1] — Stretch: ReverseAuction (subasta inversa ponderada por reputación)
+- **Added** — `contracts/src/ReverseAuction.sol`: `openJob`/`bid`/`close`. Bid efectivo = `price·(200-score)/100` (peor reputación → más caro); `bid` de un agente con calavera **revierte** (`AgentExcluded`) — exclusión on-chain. Solo LEE ScoreRegistry + ReputationSBT (interfaces mínimas). `+ test/ReverseAuction.t.sol` (7 tests, 22/22 totales) `+ script/DeployAuction.s.sol`.
+- **Added** — Deployado + verificado (Sourcify) en testnet: `ReverseAuction = 0x7ca67a992100ff9CF95f72c70c20a84A9E17b459`. ABI en `abi/ReverseAuction.json`, address en `abi/deployments.json`.
+- **Added** — `backend/auction.ts` (`npm run auction`): demo en vivo — Scraper(score 10) y Analyst(score 80) pujan → Analyst gana por menor effective; Designer(calavera) → **rechazado on-chain**; close → ganador agente#2. Verificado en vivo.
+- **Next** — Ensayo de demo. Opcional acoplar la subasta al front (eventos `JobOpened`/`BidPlaced`/`JobClosed`).
 
 ### [MERGE+polish] — Demo limpio: reúso, GoodPayer y race de indexación
 - **Fixed** — Race de indexación en `oracle.readStats`: el log de un `recordPayment` recién minado a veces no estaba indexado cuando `postScore` lo leía → score stale (analyst posteaba 0, no minteaba GoodPayer). Ahora reintenta `getLogs` (hasta ~5s) con `minJobs=1` desde `postScore`. Verificado: `scores(2)=80` → **GoodPayer SBT minteado** (`ownerOf(2)` OK).
