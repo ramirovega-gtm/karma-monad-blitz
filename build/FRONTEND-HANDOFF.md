@@ -44,7 +44,7 @@ Next.js + shadcn/ui + Tailwind + **React Flow** (`@xyflow/react`) + **viem** (tr
 |---|---|
 | Chain ID | `10143` |
 | RPC HTTP | `https://testnet-rpc.monad.xyz` |
-| RPC WS | ⚠️ **`RPC_WS` está vacío en `.env`** — conseguir un endpoint `wss` de Monad testnet (`monadLogs`) para `watchContractEvent`. Fallback: polling de `getLogs` (rango ≤100 bloques). |
+| RPC WS | ✅ `wss://testnet-rpc.monad.xyz` (probado, funciona — ya está en `.env`). Si el público se pone lento en la demo, fallback: provider dedicado (Alchemy/QuickNode/dRPC, free tier) o polling `getLogs` (≤100 bloques). |
 | Explorer | `https://testnet.monadexplorer.com` |
 
 ## 5. Contrato de integración

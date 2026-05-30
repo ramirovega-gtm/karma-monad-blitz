@@ -46,7 +46,7 @@ El back y los contratos ya funcionan. Si el front necesita una capacidad nueva:
 ## Pasos sugeridos
 
 1. `git switch -c session/front` (desde `main`).
-2. Conseguir `RPC_WS` (wss de Monad testnet) y ponerlo en `.env` (`RPC_WS=...`). Sin eso, usar polling de `getLogs` (≤100 bloques) o los fixtures.
+2. `RPC_WS` ya está resuelto en `.env`: `wss://testnet-rpc.monad.xyz` (público, probado). Si se pone lento en la demo → provider dedicado o polling `getLogs`.
 3. `frontend/`: `npx create-next-app` + shadcn + `@xyflow/react` + viem. Importar ABIs/addresses de `../abi/`.
 4. **Construí contra fixtures primero** (`abi/fixtures.events.json`): grafo, nodos/aristas, score+badge por nodo, panel de costo, showstopper. Sin bloquearte por el WS.
 5. Conectar en vivo: `watchContractEvent` (WS) sobre `PaymentRecorded`/`ScoreUpdated` + `JobOpened`/`BidPlaced`/`JobClosed`. Reads `tierOf`/`hasSkull`/`scores` por nodo.

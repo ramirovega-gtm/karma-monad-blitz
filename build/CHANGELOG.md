@@ -21,7 +21,7 @@ S0 ✅ · A ✅ · B ✅ · C ✅ · MERGE ✅ · S1 ✅  (todo on-chain, en mai
 FRONT: ⬜ próxima sesión → `frontend/` EN ESTE REPO (puede tocar el back). Brief: sessions/SESSION-FRONT.md
 ÚLTIMO PASO CERRADO: S1 ReverseAuction deployado/verificado + demo en vivo (npm run auction)
 PRÓXIMO PASO: Sesión FRONT — armar frontend/ (Next+React Flow+viem) + integrar eventos/contratos
-BLOQUEOS: conseguir RPC_WS (wss de Monad testnet) para eventos en vivo; si no → fixtures/polling
+BLOQUEOS: ninguno (RPC_WS resuelto: wss://testnet-rpc.monad.xyz funciona, ya en .env)
 DEMO BACKEND LISTO: reúso/regalía · GoodPayer · 💀 Skull · subasta (bid-weighting + calavera revierte) — todo on-chain
 ADDRESSES: ScoreRegistry 0x9402…966C · ReputationSBT 0x75da…a3aE · ReverseAuction 0x7ca6…b459 (ver abi/deployments.json)
 ```
@@ -74,7 +74,7 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 
 ### FRONT · Integración del front `session/front` ⬜ (próxima sesión)
 > Vive en `frontend/` EN ESTE REPO; la sesión puede tocar el back para exponer endpoints. Brief: `sessions/SESSION-FRONT.md`. Detalle de integración: `FRONTEND-HANDOFF.md`.
-- [ ] Conseguir `RPC_WS` (wss Monad testnet) o usar fixtures/polling
+- [x] `RPC_WS` resuelto: `wss://testnet-rpc.monad.xyz` (probado, en `.env`)
 - [ ] `frontend/` (Next + shadcn + `@xyflow/react` + viem) consumiendo `abi/` (addresses + ABIs)
 - [ ] Grafo en vivo: `watchContractEvent` sobre `PaymentRecorded`/`ScoreUpdated` (+ `JobOpened`/`BidPlaced`/`JobClosed`)
 - [ ] Score + badge Tier por nodo (`tierOf`/`hasSkull`) + showstopper (calavera + bid rechazado) + contador tx/seg + comparador de costo
