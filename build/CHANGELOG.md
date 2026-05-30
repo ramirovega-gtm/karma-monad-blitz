@@ -98,6 +98,9 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 
 > Entradas nuevas arriba. Formato: `### [hora] — título` + bullets `Added/Changed/Fixed/Cut`.
 
+### [FRONT-fix] — Overlay de la demo no aparecía (quedaba fuera del viewport)
+- **Fixed** — `GuidedDemo`: el overlay es hijo directo de `<body>`, y la regla **sin `@layer`** `body > * { position: relative; z-index: 1 }` de `globals.css` le ganaba (las reglas sin capa pisan a las utilities de Tailwind) → el `fixed` se volvía `relative` y la tarjeta quedaba empujada abajo del shell de 100vh, fuera de pantalla (la demo avanzaba "por detrás"). Se fuerza `position:fixed`/`zIndex:60` por estilo inline (gana sobre la regla sin capa). Verificado con Chrome headless: posición `fixed`, dentro del viewport.
+
 ### [FRONT-demo] — Demo guiada (3 min) + lado oferta (crear/vender agentes)
 - **Added** — `frontend/src/components/GuidedDemo.tsx`: overlay narrado de ~3 min (`DemoProvider`/`useDemo`) que maneja la app en vivo — 7 pasos (problema → dos lados → Atlas orquesta → grafo/pagos → reúso → calavera/muro → subasta+por qué Monad), auto-avance + Pausa/Siguiente/Anterior/Salir. Reusa el motor (`reset`/`hireAtlas`/`runAuction`). Botón "▶ Demo guiada" en el Header; montado en `layout.tsx`.
 - **Added** — Sección "lado oferta": `components/SupplyBand.tsx` (banda arriba del marketplace, 2 CTAs) + página `app/crear/page.tsx` (flujo experto no-técnico con wizard + matchmaking con builders + Atlas, flujo builder técnico, y Academia de tutoriales). Nav "Crear / Vender".

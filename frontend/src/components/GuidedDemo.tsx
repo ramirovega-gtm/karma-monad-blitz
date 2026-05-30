@@ -151,7 +151,10 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     <Ctx.Provider value={{ active, start, stop }}>
       {children}
       {active && s && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-4 pb-6">
+        <div
+          style={{ position: "fixed", zIndex: 60 }}
+          className="pointer-events-none inset-x-0 bottom-0 flex justify-center px-4 pb-6"
+        >
           <div className="karma-feed-in pointer-events-auto w-full max-w-3xl rounded-2xl border border-monad/45 bg-[#0e0e1f]/95 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.6)] backdrop-blur">
             {/* segmentos de progreso */}
             <div className="mb-3 flex items-center gap-1.5">
