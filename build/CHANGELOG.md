@@ -44,11 +44,12 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 - [x] Verificado: `npm run typecheck` limpio + `npm run smoke` OK
 - [x] **Merge a `main`** → habilita A/B/C
 
-### A · Contratos `session/a-contratos`
-- [ ] `ReputationSBT.sol` (EIP-5192, tiers, getters, guard `_update`)
-- [ ] `ScoreRegistry.sol` (`recordPayment`/`lookup`/`setScore` ECDSA/`markDefault`)
-- [ ] Tests Foundry verdes + `Deploy.s.sol`
-- [ ] Deploy testnet + Sourcify → `abi/deployments.json` + ABIs reales (matchean `abi/I*.json`)
+### A · Contratos `session/a-contratos` 🟡
+- [x] `ReputationSBT.sol` (EIP-5192, tiers, getters, guard `_update`, calavera irrevocable)
+- [x] `ScoreRegistry.sol` (`recordPayment`/`lookup`/`setScore` ECDSA+nonce/`markDefault`)
+- [x] Tests Foundry verdes (15/15) + `Deploy.s.sol` (ciclo validado en anvil: SBT→Registry→authorize)
+- [x] ABIs reales exportados a `abi/{ScoreRegistry,ReputationSBT}.json` — **matchean** `abi/I*.json` ✓
+- [ ] ⏳ Deploy a testnet + Sourcify → `abi/deployments.json` (BLOQUEADO: falta `DEPLOYER_PRIVATE_KEY` con MON de gas)
 
 ### B · Economía de agentes `session/b-agentes`
 - [ ] `server.ts` (x402, endpoint 402, `recordPayment` tras settle, `DEMO_SAFE`)
@@ -79,6 +80,14 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 ## 📒 Log
 
 > Entradas nuevas arriba. Formato: `### [hora] — título` + bullets `Added/Changed/Fixed/Cut`.
+
+### [A] — Contratos (Foundry)
+- **Added** — `contracts/` con Foundry (Solidity 0.8.28, OZ v5.1, evm cancun). `ReputationSBT.sol` (SBT soulbound EIP-5192, tiers GoodPayer/Skull, `tokenId == agentId`, guard `_update`, `supportsInterface(0xb45a3c0e)`, calavera **irrevocable**: una vez Skull no se degrada) y `ScoreRegistry.sol` (`recordPayment` arista+cache royalty 500bps, `lookup`, `setScore` con ECDSA EIP-191 + anti-replay por nonce + mint GoodPayer al cruzar `goodThreshold`, `markDefault` onlyOwner→Skull).
+- **Added** — `test/Karma.t.sol`: 15 tests verdes (record/lookup, threshold mint, firma válida/inválida, replay, markDefault, skull irrevocable, soulbound transfer revierte, `locked()==true`, interfaces). `script/Deploy.s.sol` (ciclo SBT→ScoreRegistry→`setScoreRegistry`), validado en anvil.
+- **Added** — ABIs reales exportados a `abi/ScoreRegistry.json` y `abi/ReputationSBT.json`; verificado que son **superset exacto** de `abi/ISCoreRegistry.json` / `abi/IReputationSBT.json` (todos los miembros de interfaz presentes con tipos idénticos). `contracts/README.md` documenta setup + **esquema de firma del oráculo** (para Sesión C).
+- **Changed** — `.gitignore`: agregado `contracts/lib/` (deps por `forge install`, no se commitean).
+- **Blocked** — Deploy a Monad testnet pendiente: falta `.env` con `DEPLOYER_PRIVATE_KEY` financiada (MON de gas vía faucet). Comando y verificación Sourcify listos en `contracts/README.md`. Tras deployar: completar `abi/deployments.json` y re-exportar ABIs.
+- **Next** — Deployar a testnet + verificar Sourcify + llenar `abi/deployments.json` (addresses + `deployedAt`).
 
 ### [S0] — Cimientos
 - **Added** — Scaffold + superficies compartidas (congeladas): `package.json`, `tsconfig.json`, `.gitignore`, `.env.example`; `backend/lib/{types,env,chain,reputation}.ts` (interfaz `ReputationLayer` + `MockReputationLayer`) + `_smoke.ts`; `abi/{ISCoreRegistry,IReputationSBT,deployments}.json`; placeholders `contracts/` y `backend/agents/`.
