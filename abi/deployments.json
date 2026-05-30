@@ -1,7 +1,11 @@
 {
   "chainId": 10143,
-  "scoreRegistry": "",
-  "reputationSBT": "",
-  "deployedAt": "",
-  "explorer": "https://testnet.monadexplorer.com"
+  "scoreRegistry": "0x9402BA73EA2d51F62BAe071D98DD3ce878d8966C",
+  "reputationSBT": "0x75da3A887c9384d3805b630eF961Aed91892a3aE",
+  "signer": "0xeF7B39eb437a5D783C29Bf7a8e9a11aA01836647",
+  "goodThreshold": 70,
+  "deployedAt": "2026-05-30T16:30:03Z",
+  "explorer": "https://testnet.monadexplorer.com",
+  "sourcify": "https://sourcify-api-monad.blockvision.org",
+  "verified": true
 }

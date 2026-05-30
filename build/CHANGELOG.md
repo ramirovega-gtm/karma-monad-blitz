@@ -44,12 +44,14 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 - [x] Verificado: `npm run typecheck` limpio + `npm run smoke` OK
 - [x] **Merge a `main`** → habilita A/B/C
 
-### A · Contratos `session/a-contratos` 🟡
+### A · Contratos `session/a-contratos` ✅
 - [x] `ReputationSBT.sol` (EIP-5192, tiers, getters, guard `_update`, calavera irrevocable)
 - [x] `ScoreRegistry.sol` (`recordPayment`/`lookup`/`setScore` ECDSA+nonce/`markDefault`)
-- [x] Tests Foundry verdes (15/15) + `Deploy.s.sol` (ciclo validado en anvil: SBT→Registry→authorize)
+- [x] Tests Foundry verdes (15/15) + `Deploy.s.sol` (ciclo SBT→Registry→authorize)
 - [x] ABIs reales exportados a `abi/{ScoreRegistry,ReputationSBT}.json` — **matchean** `abi/I*.json` ✓
-- [ ] ⏳ Deploy a testnet + Sourcify → `abi/deployments.json` (BLOQUEADO: falta `DEPLOYER_PRIVATE_KEY` con MON de gas)
+- [x] **Deployado + verificado (Sourcify `exact_match`)** → `abi/deployments.json` con addresses reales
+  - ScoreRegistry `0x9402BA73EA2d51F62BAe071D98DD3ce878d8966C` · ReputationSBT `0x75da3A887c9384d3805b630eF961Aed91892a3aE`
+  - Smoke on-chain OK: `recordPayment` emite + `lookup` devuelve (royalty 500bps)
 
 ### B · Economía de agentes `session/b-agentes`
 - [ ] `server.ts` (x402, endpoint 402, `recordPayment` tras settle, `DEMO_SAFE`)
@@ -80,6 +82,15 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 ## 📒 Log
 
 > Entradas nuevas arriba. Formato: `### [hora] — título` + bullets `Added/Changed/Fixed/Cut`.
+
+### [A] — Deploy a Monad testnet
+- **Added** — Contratos **deployados y verificados en Sourcify** (`exact_match`) en chain 10143:
+  - `ScoreRegistry` = `0x9402BA73EA2d51F62BAe071D98DD3ce878d8966C`
+  - `ReputationSBT` = `0x75da3A887c9384d3805b630eF961Aed91892a3aE`
+  - `signer` (oráculo) = `0xeF7B39eb437a5D783C29Bf7a8e9a11aA01836647` · `goodThreshold` = 70 · `owner` = `0x8a4FA5a15bBAAC2A387a75E2a57511A60C4851ee`
+- **Added** — `abi/deployments.json` con addresses reales + `deployedAt`. Wiring on-chain verificado (sbt↔registry, signer, threshold, owner).
+- **Fixed** — Smoke on-chain en testnet: `recordPayment` emite `PaymentRecorded` y `lookup` devuelve el artefacto cacheado (royalty 500bps).
+- **Next** — Sesión C consume estas addresses + ABIs (`OnchainReputationLayer`); el oráculo firma con `ORACLE_PRIVATE_KEY` del `.env` (esquema en `contracts/README.md`).
 
 ### [A] — Contratos (Foundry)
 - **Added** — `contracts/` con Foundry (Solidity 0.8.28, OZ v5.1, evm cancun). `ReputationSBT.sol` (SBT soulbound EIP-5192, tiers GoodPayer/Skull, `tokenId == agentId`, guard `_update`, `supportsInterface(0xb45a3c0e)`, calavera **irrevocable**: una vez Skull no se degrada) y `ScoreRegistry.sol` (`recordPayment` arista+cache royalty 500bps, `lookup`, `setScore` con ECDSA EIP-191 + anti-replay por nonce + mint GoodPayer al cruzar `goodThreshold`, `markDefault` onlyOwner→Skull).
