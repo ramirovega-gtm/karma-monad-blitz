@@ -60,35 +60,49 @@ const MAX_LOG_RANGE = 100n;
 /** Ventana hacia atrás por defecto cuando no se pasa `fromBlock` (cubre la corrida + algo de historia). */
 const DEFAULT_LOOKBACK = 500n;
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Lee jobs + volumen del agente desde los eventos PaymentRecorded.
+ * `minJobs`: como el log de un `recordPayment` recién minado puede tardar en indexarse en el RPC
+ * (la TX ya está minada pero `getLogs` aún no la devuelve), reintentamos hasta ver al menos
+ * `minJobs` eventos. Sin esto, postScore a veces computa un score stale (0) → race intermitente.
+ */
 export async function readStats(
   registry: Hex,
   agentId: bigint,
   fromBlock: bigint | 'earliest' = 'earliest',
+  minJobs = 0,
 ): Promise<AgentStats> {
-  const latest = await publicClient.getBlockNumber();
-  const start =
-    fromBlock === 'earliest'
-      ? latest > DEFAULT_LOOKBACK
-        ? latest - DEFAULT_LOOKBACK
-        : 0n
-      : fromBlock;
+  for (let attempt = 0; ; attempt++) {
+    const latest = await publicClient.getBlockNumber();
+    const start =
+      fromBlock === 'earliest'
+        ? latest > DEFAULT_LOOKBACK
+          ? latest - DEFAULT_LOOKBACK
+          : 0n
+        : fromBlock;
 
-  // Paginamos en ventanas de ≤100 bloques (límite del RPC público de Monad).
-  let jobs = 0;
-  let volRaw = 0n;
-  for (let lo = start; lo <= latest; lo += MAX_LOG_RANGE) {
-    const hi = lo + MAX_LOG_RANGE - 1n > latest ? latest : lo + MAX_LOG_RANGE - 1n;
-    const chunk = await publicClient.getLogs({
-      address: registry,
-      event: PAYMENT_RECORDED,
-      args: { agentId },
-      fromBlock: lo,
-      toBlock: hi,
-    });
-    jobs += chunk.length;
-    for (const l of chunk) volRaw += l.args.amount ?? 0n;
+    // Paginamos en ventanas de ≤100 bloques (límite del RPC público de Monad).
+    let jobs = 0;
+    let volRaw = 0n;
+    for (let lo = start; lo <= latest; lo += MAX_LOG_RANGE) {
+      const hi = lo + MAX_LOG_RANGE - 1n > latest ? latest : lo + MAX_LOG_RANGE - 1n;
+      const chunk = await publicClient.getLogs({
+        address: registry,
+        event: PAYMENT_RECORDED,
+        args: { agentId },
+        fromBlock: lo,
+        toBlock: hi,
+      });
+      jobs += chunk.length;
+      for (const l of chunk) volRaw += l.args.amount ?? 0n;
+    }
+    if (jobs >= minJobs || attempt >= 8) {
+      return { jobs, volRaw, volUSDC: volRaw / USDC_DECIMALS };
+    }
+    await sleep(600); // esperar a que el RPC indexe el log recién minado
   }
-  return { jobs, volRaw, volUSDC: volRaw / USDC_DECIMALS };
 }
 
 export interface ComputedScore extends AgentStats {
@@ -100,8 +114,9 @@ export async function computeScore(
   registry: Hex,
   agentId: bigint,
   fromBlock: bigint | 'earliest' = 'earliest',
+  minJobs = 0,
 ): Promise<ComputedScore> {
-  const stats = await readStats(registry, agentId, fromBlock);
+  const stats = await readStats(registry, agentId, fromBlock, minJobs);
   return { ...stats, value: scoreFromStats(stats.jobs, stats.volUSDC) };
 }
 

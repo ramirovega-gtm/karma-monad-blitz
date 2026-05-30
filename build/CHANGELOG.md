@@ -21,11 +21,10 @@ S0 Cimientos:        ✅  ·  A Contratos: ✅ (deployado+verificado)
 B  Economía agentes: ✅  ·  C Reputación chain: ✅
 MERGE Integración:   ✅ loop core E2E real (recordPayment→evento→score→SBT) + 💀 SKULL on-chain
 FRONT (otra persona):⬜ se acopla (ya tiene addresses + ABIs + abi/fixtures.events.json)
-ÚLTIMO PASO CERRADO: MERGE · loop core en vivo en Monad testnet (designer→Skull verificado: hasSkull=true)
-PRÓXIMO PASO: polish/demo — prep de demo (ver notas) + opcional S1 si sobra tiempo
+ÚLTIMO PASO CERRADO: MERGE+polish · 4 beats verificados on-chain (GoodPayer SBT agente#2 + Skull agente#3)
+PRÓXIMO PASO: ensayo de demo + 3 agentes precargados (fallback) + opcional S1 si sobra tiempo
 BLOQUEOS: ninguno
-PREP DEMO: (1) saltear el input por corrida (el cache de artefactos persiste on-chain → reúso se dispara en re-runs);
-           (2) para mintear GoodPayer en vivo, subir volumen/jobs o bajar GOOD_THRESHOLD (score actual 10 < 70)
+DEMO LISTO: reúso limpio (salt por corrida) · analyst score 80 → GoodPayer minteado · designer → Skull · todo on-chain
 ```
 
 Leyenda: ⬜ pendiente · 🟡 en progreso · ✅ hecho · ⛔ cortado (scope) · ⚠️ con riesgo/bloqueo
@@ -85,6 +84,12 @@ Cada sesión actualiza **solo su bloque** (en su branch) → merges limpios. Det
 ## 📒 Log
 
 > Entradas nuevas arriba. Formato: `### [hora] — título` + bullets `Added/Changed/Fixed/Cut`.
+
+### [MERGE+polish] — Demo limpio: reúso, GoodPayer y race de indexación
+- **Fixed** — Race de indexación en `oracle.readStats`: el log de un `recordPayment` recién minado a veces no estaba indexado cuando `postScore` lo leía → score stale (analyst posteaba 0, no minteaba GoodPayer). Ahora reintenta `getLogs` (hasta ~5s) con `minJobs=1` desde `postScore`. Verificado: `scores(2)=80` → **GoodPayer SBT minteado** (`ownerOf(2)` OK).
+- **Changed** — `orchestrator.ts`: salt por corrida en los inputs (`...#${run}`) → cada demo arranca con cache limpio (1er pedido full, 2do regalía) sin redeploy. Reúso ahora se ve correcto.
+- **Changed** — `agents/analyst.ts`: precio 0.12 → **700 USDC** (data del demo) para que el score cruce `GOOD_THRESHOLD=70` y se vea el GoodPayer en vivo. (Alternativa para demo 100% micropagos: bajar el umbral vía redeploy — anotado.)
+- **Verified (on-chain)** — 4 beats: scraper/analyst full → recordPayment; reúso → regalía; analyst score 80 → GoodPayer SBT; designer → markDefault → Skull SBT. `ownerOf(2)` y `ownerOf(3)` confirman ambos SBT.
 
 ### [MERGE] — Integración: loop core verde on-chain
 - **Changed** — Swap mock→real: `new MockReputationLayer()` → `OnchainReputationLayer.fromEnv()` en `backend/orchestrator.ts` + `backend/server.ts` (única edición de código del MERGE). `.env` (gitignored) con addresses reales de A + claves descartables (DEPLOYER/ORACLE) de `karma-A`.

@@ -9,7 +9,7 @@ export const analyst: AgentProvider = {
   kind: 'analyst',
   agentId: 2n,
   label: 'Analyst-07',
-  priceBaseUnits: 120_000n, // 0.12 USDC
+  priceBaseUnits: 700_000_000n, // 700 USDC — score = jobs*10 + volUSDC/10 = 80 ≥ GOOD_THRESHOLD(70) → mintea GoodPayer en el demo
   royaltyBps: 800, // 8%
   async run(input: string): Promise<AgentResult> {
     if (input.includes(FAIL_SENTINEL)) {

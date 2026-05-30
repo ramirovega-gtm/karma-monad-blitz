@@ -51,10 +51,13 @@ export class OnchainReputationLayer implements ReputationLayer {
 
   /** El oráculo recalcula (desde el grafo on-chain), firma (con domain separation) y postea el score. */
   async postScore(agentId: bigint): Promise<Hex> {
+    // minJobs=1: postScore corre justo después de recordPayment → esperamos que el RPC
+    // indexe al menos ese pago antes de computar, para no firmar un score stale (0).
     const { value } = await oracle.computeScore(
       this.cfg.scoreRegistry,
       agentId,
       this.cfg.fromBlock,
+      1,
     );
     const nonce = oracle.nextNonce();
     const chainId = BigInt(env.CHAIN_ID);

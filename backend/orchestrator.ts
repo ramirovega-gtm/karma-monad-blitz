@@ -195,17 +195,22 @@ async function main() {
   const results: StepResult[] = [];
   try {
     // ── 1) Cascada: el orquestador arma una campaña contratando proveedores en serie.
+    // Salt por corrida: el cache de artefactos es permanente on-chain → así cada demo arranca
+    // limpio (1er pedido = miss/full, 2do = hit/regalía) sin redeploy.
+    const run = Date.now().toString(36);
+    const job = `monad-defi-data#${run}`;
+
     console.log('① Cascada — orquestador contrata proveedores por-resultado:');
-    results.push(await execStep(url, reputation, 'scraper', 'monad-defi-data'));
-    results.push(await execStep(url, reputation, 'analyst', 'monad-defi-data'));
+    results.push(await execStep(url, reputation, 'scraper', job));
+    results.push(await execStep(url, reputation, 'analyst', job));
 
     // ── 2) Beat reúso: otra subtarea pide EXACTAMENTE lo mismo → paga regalía, no full.
     console.log('\n② Reúso — segunda demanda del mismo artefacto del scraper:');
-    results.push(await execStep(url, reputation, 'scraper', 'monad-defi-data'));
+    results.push(await execStep(url, reputation, 'scraper', job));
 
     // ── 3) Beat calavera (SHOWSTOPPER): el diseñador toma el job y entrega basura.
     console.log('\n③ Calavera — proveedor cobra pero entrega basura → exclusión irrevocable:');
-    results.push(await execStep(url, reputation, 'designer', `campaña-monad ${FAIL_SENTINEL}`));
+    results.push(await execStep(url, reputation, 'designer', `campaña-monad#${run} ${FAIL_SENTINEL}`));
 
     // ── Resumen del grafo.
     console.log('\n── Grafo resultante ───────────────────────────────');
