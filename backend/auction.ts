@@ -17,11 +17,21 @@ const AUCTION = deployments.reverseAuction as Hex;
 const GAS = 300_000n;
 const usdc = (u: bigint) => `$${(Number(u) / 1e6).toFixed(2)}`;
 
-async function main() {
+export interface AuctionResult {
+  jobId: Hex;
+  budget: string;
+  bids: { agentId: string; price: string; excluded: boolean }[];
+  winner: string;
+  winnerPrice: string;
+  winnerEffective: string;
+}
+
+export async function runAuction(): Promise<AuctionResult> {
   const pk = requireEnv('DEPLOYER_PRIVATE_KEY') as Hex;
   const wc = walletClient(pk);
   const jobId = keccak256(toHex(`auction#${Date.now()}`));
   const budget = 500_000_000n; // 500 USDC tope
+  const bids: { agentId: string; price: string; excluded: boolean }[] = [];
 
   async function send(fn: string, args: unknown[]) {
     const hash = await wc.writeContract({ address: AUCTION, abi: auctionAbi as any, functionName: fn, args, gas: GAS });
@@ -33,10 +43,12 @@ async function main() {
       // simulamos primero: si el agente tiene calavera, revierte ACÁ (sin gastar una TX condenada).
       await publicClient.simulateContract({ address: AUCTION, abi: auctionAbi as any, functionName: 'bid', args: [jobId, agentId, price], account: wc.account });
       const tx = await send('bid', [jobId, agentId, price]);
+      bids.push({ agentId: agentId.toString(), price: price.toString(), excluded: false });
       console.log(`  ✓ ${label} (agente#${agentId}) pujó ${usdc(price)}  tx=${tx.slice(0, 12)}…`);
     } catch (e) {
       const msg = String(e);
       const excluded = msg.includes('AgentExcluded');
+      bids.push({ agentId: agentId.toString(), price: price.toString(), excluded });
       console.log(`  ${excluded ? '💀' : '✗'} ${label} (agente#${agentId}) ${excluded ? 'RECHAZADO on-chain — tiene calavera, excluido del mercado' : 'bid falló: ' + msg.slice(0, 80)}`);
     }
   }
@@ -56,6 +68,19 @@ async function main() {
   ]);
   console.log(`  🏆 ganador: agente#${job[5]} a ${usdc(job[4])} (effective ${usdc(job[3])})  tx=${closeTx.slice(0, 12)}…`);
   console.log('\n✅ Subasta S1 OK: bid-weighting por reputación + exclusión on-chain de la calavera.');
+
+  return {
+    jobId,
+    budget: budget.toString(),
+    bids,
+    winner: String(job[5]),
+    winnerPrice: String(job[4]),
+    winnerEffective: String(job[3]),
+  };
 }
 
-main().catch((e) => { console.error(String(e).slice(0, 400)); process.exit(1); });
+import { pathToFileURL } from 'node:url';
+const isMain = !!process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isMain) {
+  runAuction().catch((e) => { console.error(String(e).slice(0, 400)); process.exit(1); });
+}

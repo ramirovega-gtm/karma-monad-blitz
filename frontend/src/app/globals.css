@@ -1,0 +1,178 @@
+@import "tailwindcss";
+
+/* ── Karma · sistema de diseño (Claude Design: dark, Monad-violet, serif display) ── */
+:root {
+  --ink: #0a0a0f;        /* bg */
+  --bg-2: #0d0d18;
+  --panel: #13132b;      /* card */
+  --panel-2: #16162e;    /* card-2 */
+  --line: #23234a;
+
+  --txt: #e2e8f0;
+  --muted: #94a3b8;
+  --faint: #5b5b7a;
+
+  --monad: #7c3aed;      /* violeta Monad (marca / primario) */
+  --acc: #a855f7;        /* violeta claro (interactivo) */
+  --cyan: #06b6d4;       /* pagos */
+  --acc-2: #34d399;      /* verde claro (GoodPayer / colateral / éxito) */
+  --green: #10b981;
+  --warn: #f59e0b;       /* ámbar */
+  --amber: #fbbf24;
+  --bad: #ef4444;        /* rojo (calavera / slash) */
+  --pink: #ec4899;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-bg-2: var(--bg-2);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-line: var(--line);
+  --color-txt: var(--txt);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-monad: var(--monad);
+  --color-acc: var(--acc);
+  --color-cyan: var(--cyan);
+  --color-acc-2: var(--acc-2);
+  --color-green: var(--green);
+  --color-warn: var(--warn);
+  --color-amber: var(--amber);
+  --color-bad: var(--bad);
+  --color-pink: var(--pink);
+
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+  --font-serif: Georgia, "Times New Roman", serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  color: var(--txt);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  background:
+    radial-gradient(1100px 760px at 18% 2%, rgba(124, 58, 237, 0.1), transparent 56%),
+    radial-gradient(900px 700px at 96% 100%, rgba(6, 182, 212, 0.06), transparent 60%),
+    var(--ink);
+}
+
+/* textura de grilla tenue (firma del diseño) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(124, 58, 237, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.045) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(1400px 1000px at 50% 40%, #000 30%, transparent 85%);
+}
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Scrollbars finas */
+*::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Inputs de formularios */
+.input {
+  width: 100%;
+  border-radius: 0.625rem;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  padding: 0.7rem 0.85rem;
+  font-size: 0.95rem;
+  color: var(--txt);
+  outline: none;
+}
+.input::placeholder {
+  color: var(--faint);
+}
+.input:focus {
+  border-color: var(--violet, var(--acc));
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.14);
+}
+
+/* React Flow: estilo oscuro Karma */
+.react-flow {
+  background: transparent;
+}
+.react-flow__edge-path {
+  stroke-width: 2;
+}
+.react-flow__attribution {
+  display: none;
+}
+
+@keyframes karma-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 9px rgba(239, 68, 68, 0);
+  }
+}
+.karma-skull-pulse {
+  animation: karma-pulse 1.4s ease-out infinite;
+}
+
+@keyframes karma-feed-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.karma-feed-in {
+  animation: karma-feed-in 0.45s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+@keyframes karma-slam {
+  0% {
+    transform: scale(3.2) rotate(-16deg);
+    opacity: 0;
+  }
+  45% {
+    transform: scale(1.4) rotate(6deg);
+    opacity: 1;
+  }
+  65% {
+    transform: scale(0.85) rotate(-3deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+.karma-slam {
+  animation: karma-slam 0.6s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
