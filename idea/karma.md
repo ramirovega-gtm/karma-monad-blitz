@@ -146,20 +146,22 @@ FRONT (Next + shadcn + React Flow)   grafo en vivo (watchContractEvent WS) + sco
 
 ---
 
-## 10. Plan 7h (10:45 → 17:35 · 3 personas: Contratos / Backend+Agentes / Front)
+## 10. Plan 7h (10:45 → 17:35 · por track, no por personas · todo en este repo)
 
-| Hora | Contratos (Foundry) | Backend + Agentes (Node/TS) | Front (Next + React Flow) |
-|------|---------------------|------------------------------|----------------------------|
-| 10:45-11:30 | scaffold + `ScoreRegistry` skeleton + eventos | setup `@x402/*` + facilitator + USDC testnet | scaffold + React Flow vacío |
-| 11:30-12:30 | `recordPayment` + `setScore` (ECDSA) | server x402 (1 endpoint) + cliente que paga | mock graph, nodos/aristas |
-| 12:30-13:30 | `ReputationSBT` (OZ `_update`) + mint | cascada A→B→C + oráculo firma score | viem `watchContractEvent` (WS) → arista live |
-| 13:30-14:00 | **deploy testnet** + addresses | conectar settle → `recordPayment` | leer ERC-8004 identidad (labels) |
-| 14:00-15:00 | integración: pago→evento→score→SBT | idem | score + SBT tier por nodo |
-| **15:00-16:00** | **INTEGRACIÓN END-TO-END + buffer (sagrado)** | idem | idem |
-| 16:00-16:45 | stretch: cache/regalía o subasta (si verde) | demo-safe fallback (mock settle) | beat regalía + calavera + polish |
-| 16:45-17:35 | congelar, ensayar 2×, screenshots backup | idem | idem |
+> Contratos + backend de este lado. El **front lo trabaja otra persona** y se acopla después (consume ABIs + eventos). Plan vivo y diagramas en `build/plan.html`; estado en `build/CHANGELOG.md`.
 
-**Regla de oro:** a las **15:00 el loop end-to-end anda**. Después: integración + polish + ensayo, NO features. Equipo de 2 → cortar ERC-8004 read (labels hardcoded) + SBT a stretch.
+| Hora | Contratos (Foundry) | Backend + Agentes (Node/TS) |
+|------|---------------------|------------------------------|
+| 10:45-11:30 | scaffold + `ScoreRegistry` skeleton + eventos | setup `@x402/*` + facilitator + USDC testnet |
+| 11:30-12:30 | `recordPayment` + `setScore` (ECDSA) | server x402 (1 endpoint) + cliente que paga |
+| 12:30-13:30 | `ReputationSBT` (OZ `_update`) + mint | cascada de agentes + oráculo firma score |
+| 13:30-14:00 | **deploy testnet** + addresses + publicar ABIs | conectar settle → `recordPayment` |
+| 14:00-15:00 | integración: pago→evento→score→SBT | idem |
+| **15:00-16:00** | **INTEGRACIÓN CORE END-TO-END + buffer (sagrado)** | idem |
+| 16:00-16:45 | stretch: cache/regalía o subasta (si verde) | demo-safe fallback (mock settle) |
+| 16:45-17:35 | congelar, ensayar 2×, screenshots backup | idem |
+
+**Regla de oro:** a las **15:00 el loop core anda** (verificable por logs/explorer, sin depender del front). Después: integración + acople con el front + polish + ensayo, NO features. El front corre en paralelo (otra persona) y se acopla cuando los contratos están desplegados y los eventos publicados.
 
 ---
 
@@ -183,7 +185,7 @@ FRONT (Next + shadcn + React Flow)   grafo en vivo (watchContractEvent WS) + sco
 
 ## 13. Checklist pre-build
 
-- [ ] Repo de build SEPARADO (este `hackathon-monad/` es research/planning, no código de producto — firewall).
+- [x] Build en ESTE mismo repo (decidido: contratos + backend acá; front lo hace otra persona y se acopla después). Trabajar todo en local primero.
 - [ ] Faucet Monad testnet → MON + USDC a las wallets.
 - [ ] `git clone https://github.com/monad-developers/foundry-monad` + Foundry instalado.
 - [ ] `@x402/*` + facilitador `x402-facilitator.molandak.org` + USDC testnet `0x534b2f3A21130d7a60830c2Df862319e593943A3` (chain 10143).

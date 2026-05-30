@@ -12,7 +12,7 @@ Es la fusión de dos ideas: una economía de agentes con micropagos x402 + conte
 
 ## Cómo usar este repo
 
-Este repo es **el contexto y el plan**, no el código del dApp (ese va en un repo de build aparte — ver `build/kickoff.md`). Acá está la idea + todo el camino que la produjo, para que cualquiera del equipo (o un agente AI) entienda el qué y el porqué.
+Este repo tiene **el contexto + el plan + el código**: todo el dApp se desarrolla **acá mismo**. **Contratos + backend de este lado**; el **front lo trabaja otra persona** y se acopla después (consume ABIs + eventos). El estado vivo del build está en [`build/CHANGELOG.md`](build/CHANGELOG.md) y el plan con diagramas en [`build/plan.html`](build/plan.html). Acá también está la idea + todo el camino que la produjo, para que cualquiera del equipo (o un agente AI) entienda el qué y el porqué.
 
 | Carpeta | Qué hay |
 |---------|---------|
@@ -22,7 +22,11 @@ Este repo es **el contexto y el plan**, no el código del dApp (ese va en un rep
 | `research/` | Los 4 cycles de deep research con fuentes (tech+landscape de Monad, finalistas, context graph). |
 | `frame/` | El frame de evaluación (6 ejes), specs verificadas de Monad + building blocks, y anti-patterns. |
 | `reputefi-brief.md` | El brief original del compañero (la mitad ReputeFi del merge). |
-| **[`build/kickoff.md`](build/kickoff.md)** | **Para arrancar a codear:** prompt de kickoff, reparto 3 personas, plan hora-por-hora, primeros 45 min. |
+| **[`build/kickoff.md`](build/kickoff.md)** | **Para arrancar a codear:** prompt de kickoff, reparto por track (contratos/backend, sin personas), plan hora-por-hora, primeros 45 min. |
+| **[`build/plan.html`](build/plan.html)** | **El plan de ejecución con diagramas** (stack, arquitectura, servicios, flujo de datos, esquema de contratos, scaffold, módulos, plan 7h, demo, riesgos). Abrir en el navegador. |
+| **[`build/CHANGELOG.md`](build/CHANGELOG.md)** | **El "acá estamos":** tracker por sesiones + estado vivo del build. Se actualiza al cerrar cada paso. |
+| **[`build/sessions/`](build/sessions/SESSIONS.md)** | **Desarrollo fragmentado en sesiones paralelas** (S0 cimientos → A/B/C → MERGE). Cada `SESSION-*.md` es autocontenido para abrir en una sesión Claude nueva sin pisarse con las otras. |
+| **[`build/FRONTEND-HANDOFF.md`](build/FRONTEND-HANDOFF.md)** | **Todo lo que necesita la persona del front** (otra persona, repo aparte): demo, stack, red, ABIs/addresses, eventos a escuchar, fixtures y gotchas. |
 
 ## El loop que define a Karma
 

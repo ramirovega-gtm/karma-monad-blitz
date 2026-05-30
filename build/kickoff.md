@@ -1,19 +1,20 @@
 # Build kickoff — Karma (anillo 1)
 
-Equipo confirmado: **3 personas, cómodos con Solidity.** Build útil ~7h (10:45 → 17:35). Submission 17:35, demo en vivo 18:00.
+Build útil ~7h (10:45 → 17:35). Submission 17:35, demo en vivo 18:00.
 
-> ⚠️ El código del dApp va en un **repo de build SEPARADO** (este repo es contexto/plan). Arrancá clonando el template y pegando el prompt de abajo.
+> ✅ **Decisión:** todo se desarrolla en **este mismo repo**, **sin dividir el trabajo por personas**. **Contratos + backend de este lado**; el **front lo trabaja otra persona** y se **acopla después** (consume ABIs + eventos). El estado vivo del build está en [`CHANGELOG.md`](CHANGELOG.md); el plan con diagramas en [`plan.html`](plan.html).
 
-## Setup (terminal, repo nuevo de build)
+## Setup (terminal, en este repo)
 
 ```bash
-git clone https://github.com/monad-developers/foundry-monad karma-app && cd karma-app
+# inicializar Foundry acá (template oficial Monad):
+forge init --template monad-developers/foundry-monad contracts
 curl -L https://foundry.paradigm.xyz | bash && foundryup
 # faucet: testnet-faucet.monad.xyz → MON + USDC a la wallet de deploy
 # verificar direcciones ERC-8004 en docs.monad.xyz/guides/erc-8004
 ```
 
-## Prompt de kickoff (pegar en Claude Code, repo de build)
+## Prompt de kickoff (pegar en Claude Code, en este repo)
 
 ```
 Construí el "anillo 1" de Karma: la capa de confianza de una economía de agentes en Monad testnet (chain 10143, RPC https://testnet-rpc.monad.xyz). Stack: Foundry+Solidity (OZ v5), Node/TS backend, Next+shadcn+React Flow front, viem.
@@ -34,36 +35,39 @@ BACKEND (Node/TS, viem):
 - Cliente: orquestador con @x402/fetch que contrata a 2-3 agentes proveedores en cascada (texto mock o Claude). Antes de pagar consulta lookup(inputHash); si existe y validUntil>now, paga solo la regalía.
 - Oráculo firmante: fórmula fija score = min(100, jobs*10 + volUSDC/10), firma y postea setScore.
 
-FRONT (Next + shadcn + React Flow @xyflow/react):
-- viem watchContractEvent sobre transporte WebSocket (wss) escuchando PaymentRecorded → setNodes/setEdges concat (arista animada = USDC viajando) + d3-force layout.
-- Cada nodo muestra score + badge de Tier (calavera/buen pagador). Contador de tx/seg + comparador de costo "Monad vs Ethereum".
-- Cuando un agente recibe Skull, su nodo se marca y un bid suyo se rechaza visiblemente.
+FRONT (otra persona, se acopla después — NO lo construyas en este repo):
+- El front (Next + shadcn + React Flow) lo desarrolla otra persona y consume lo que dejamos: ABIs + addresses desplegadas + eventos PaymentRecorded/ScoreUpdated vía WS.
+- Tu trabajo acá respecto al front: dejar publicados los ABIs/addresses (ej. abi/deployments.json) y que los eventos tengan el shape esperado.
 
-NO construyas: LoanManager, LiquidationEngine, ReverseAuction, AI risk engine real. Empezá por ScoreRegistry + el server x402 + el front escuchando eventos, en paralelo. Meta: loop end-to-end (pago→evento→grafo→score→SBT) andando lo antes posible.
+NO construyas: el FRONT (otra persona), LoanManager, LiquidationEngine, ReverseAuction, AI risk engine real. Empezá por ScoreRegistry + el server x402, en paralelo. Meta: loop core (pago→recordPayment→evento→score→SBT) andando lo antes posible, verificable por logs/explorer sin depender del front.
 ```
 
-## Reparto (3 personas)
+## Reparto (por track, no por personas)
 
-| Quién | Dueño de | Entregable 15:00 |
+Todo en este repo. **Contratos + backend de este lado**; el **front lo trabaja otra persona** y se acopla después.
+
+| Track | Alcance | Entregable 15:00 |
 |---|---|---|
-| **A** | Contratos (Foundry): `ScoreRegistry` + `ReputationSBT` + deploy | contratos deployados + verificados |
-| **B** | Backend + agentes (Node/TS): server x402, cascada, oráculo firmante | settle → `recordPayment` andando |
-| **C** | Front (Next + React Flow): grafo en vivo + score/SBT por nodo | aristas apareciendo por evento WS |
+| **Contratos** | Foundry: `ScoreRegistry` + `ReputationSBT` + deploy + ABIs | contratos deployados + verificados + `abi/deployments.json` |
+| **Backend** | Node/TS: server x402, cascada, oráculo firmante, puente | settle → `recordPayment` → score → SBT andando |
+| **Front** *(otra persona)* | Next + React Flow: grafo en vivo + score/SBT por nodo | se acopla después leyendo ABIs + eventos |
 
 ## Plan hora-por-hora
 
-| Hora | A (Contratos) | B (Backend+Agentes) | C (Front) |
-|------|---------------|----------------------|-----------|
-| 10:45-11:30 | scaffold + `ScoreRegistry` skeleton + eventos | setup `@x402/*` + facilitador + USDC | scaffold + React Flow vacío |
-| 11:30-12:30 | `recordPayment` + `setScore` (ECDSA) | server x402 (1 endpoint) + cliente que paga | mock graph, nodos/aristas |
-| 12:30-13:30 | `ReputationSBT` (OZ `_update`) + mint | cascada A→B→C + oráculo firma score | viem `watchContractEvent` (WS) → arista live |
-| 13:30-14:00 | **deploy testnet** + addresses | settle → `recordPayment` | leer ERC-8004 identidad (labels) |
-| 14:00-15:00 | integración: pago→evento→score→SBT | idem | score + SBT tier por nodo |
-| **15:00-16:00** | **INTEGRACIÓN END-TO-END + buffer (sagrado)** | idem | idem |
-| 16:00-16:45 | **stretch: ReverseAuction** (ver abajo) | demo-safe fallback (mock settle) | beat regalía + calavera + polish |
-| 16:45-17:35 | congelar, ensayar 2×, screenshots backup | idem | idem |
+| Hora | Contratos | Backend + Agentes |
+|------|-----------|--------------------|
+| 10:45-11:30 | scaffold + `ScoreRegistry` skeleton + eventos | setup `@x402/*` + facilitador + USDC |
+| 11:30-12:30 | `recordPayment` + `setScore` (ECDSA) | server x402 (1 endpoint) + cliente que paga |
+| 12:30-13:30 | `ReputationSBT` (OZ `_update`) + mint | cascada de agentes + oráculo firma score |
+| 13:30-14:00 | **deploy testnet** + addresses + publicar ABIs | settle → `recordPayment` |
+| 14:00-15:00 | integración: pago→evento→score→SBT | idem |
+| **15:00-16:00** | **INTEGRACIÓN CORE END-TO-END + buffer (sagrado)** | idem |
+| 16:00-16:45 | **stretch: ReverseAuction** (ver abajo) | demo-safe fallback (mock settle) |
+| 16:45-17:35 | congelar, ensayar 2×, screenshots backup | idem |
 
-**Regla de oro:** loop end-to-end cerrado a las **15:00**. Después: integración + polish + ensayo, NO features.
+> El **front** corre en paralelo (otra persona) y se acopla cuando los contratos están desplegados y los eventos publicados.
+
+**Regla de oro:** loop core cerrado a las **15:00** (verificable por logs/explorer). Después: integración + acople con el front + polish + ensayo, NO features.
 
 ## Stretch: ReverseAuction.sol (solo si el loop anda a las 15:00)
 
@@ -79,14 +83,15 @@ Implementa el bid-weighting-by-reputation que el paper Agent Exchange dejó en t
 
 ## Primeros 45 min (en paralelo, ya)
 
-1. **A:** clone foundry-monad, `foundryup`, faucet, esqueleto `ScoreRegistry` con eventos.
-2. **B:** `npm i @x402/core @x402/evm @x402/fetch @x402/express`, conectar facilitador + USDC, 1 endpoint que devuelva 402.
-3. **C:** `npx create-next-app` + shadcn + `@xyflow/react`, React Flow vacío con viem en transporte WebSocket listo para `watchContractEvent`.
+1. **Contratos:** `forge init --template monad-developers/foundry-monad contracts`, `foundryup`, faucet, esqueleto `ScoreRegistry` con eventos.
+2. **Backend:** `npm i @x402/core @x402/evm @x402/fetch @x402/express`, conectar facilitador + USDC, 1 endpoint que devuelva 402.
+3. *(Front, otra persona, en paralelo: `create-next-app` + shadcn + `@xyflow/react` + viem WS — no es trabajo de este repo.)*
 
 ## Plan B (riesgos)
 
 - x402 falla en vivo → mock settle + `recordPayment` igual dispara el grafo.
-- Loop no cierra → 3 agentes precargados + el SBT calavera con wallets fijas.
+- Loop core no cierra → 3 agentes precargados + el SBT calavera con wallets fijas.
+- Front no llega a acoplarse → demostrar el loop core por el explorer (eventos + SBT minteado) + video de respaldo.
 - Siempre: **video de respaldo** grabado 16:45-17:35.
 
 ---
